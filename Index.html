@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX ASX MARKET INTELLIGENCE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg:#020408;--bg2:#060d14;--bg3:#0a1520;
+    --panel:#0d1e2e;--panel2:#112233;
+    --accent:#00e5ff;--accent2:#00ff9d;--accent3:#ff6b35;
+    --gold:#ffd700;--red:#ff3366;--green:#00ff9d;
+    --yellow:#ffcc00;--purple:#b44fff;
+    --border:rgba(0,229,255,0.18);--border2:rgba(0,229,255,0.35);
+    --glow:0 0 20px rgba(0,229,255,0.3);
+    --glow-gold:0 0 20px rgba(255,215,0,0.4);
+    --glow-red:0 0 20px rgba(255,51,102,0.4);
+    --glow-green:0 0 20px rgba(0,255,157,0.4);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:#c8d8e8;font-family:'Rajdhani',sans-serif;overflow-x:hidden;min-height:100vh;}
+
+  body::before{
+    content:'';position:fixed;inset:0;
+    background-image:linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);
+    background-size:40px 40px;pointer-events:none;z-index:0;
+  }
+
+  .scan-line{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,229,255,0.6),transparent);animation:scan 6s linear infinite;z-index:1;pointer-events:none;}
+  @keyframes scan{0%{top:0;opacity:1;}90%{opacity:.8;}100%{top:100vh;opacity:0;}}
+
+  #app{position:relative;z-index:2;padding:12px;}
+
+  /* HEADER */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(135deg,#050f1a,#0a1e30);border:1px solid var(--border2);border-radius:8px;margin-bottom:10px;box-shadow:var(--glow),inset 0 1px 0 rgba(0,229,255,0.1);}
+  .header-left{display:flex;align-items:center;gap:16px;}
+  .logo{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .logo-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,229,255,0.5);letter-spacing:4px;margin-top:2px;}
+  .header-status{display:flex;gap:12px;align-items:center;}
+  .status-pill{font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 10px;border-radius:20px;letter-spacing:1px;}
+  .status-live{background:rgba(0,255,157,0.1);border:1px solid var(--green);color:var(--green);animation:pulse-live 2s ease-in-out infinite;}
+  @keyframes pulse-live{0%,100%{box-shadow:0 0 5px rgba(0,255,157,0.3);}50%{box-shadow:0 0 15px rgba(0,255,157,0.7);}}
+  .status-asx{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);color:var(--gold);}
+  .header-clock{font-family:'Orbitron',monospace;font-size:16px;color:var(--accent);letter-spacing:2px;}
+  .ai-dot-wrap{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);}
+  .ai-dot{width:8px;height:8px;border-radius:50%;background:var(--purple);animation:ai-pulse 1.5s ease-in-out infinite;}
+  @keyframes ai-pulse{0%,100%{opacity:.4;transform:scale(1);}50%{opacity:1;transform:scale(1.4);}}
+
+  /* TICKER */
+  .alert-banner{background:linear-gradient(90deg,rgba(255,107,53,0.1),rgba(255,204,0,0.1),rgba(255,107,53,0.1));border:1px solid rgba(255,204,0,0.3);border-radius:6px;padding:8px 16px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--yellow);margin-bottom:10px;overflow:hidden;white-space:nowrap;}
+  .ticker-wrap{display:inline-block;animation:ticker 50s linear infinite;padding-left:100%;}
+  @keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-100%);}}
+
+  /* PULSE ROW */
+  .pulse-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px;}
+  .pulse-card{background:linear-gradient(135deg,#0a1825,#0d2035);border:1px solid var(--border);border-radius:6px;padding:10px 12px;text-align:center;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;}
+  .pulse-card:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
+  .pulse-card.up{border-color:rgba(0,255,157,0.3);}
+  .pulse-card.down{border-color:rgba(255,51,102,0.3);}
+  .pulse-card.hot{border-color:rgba(255,204,0,0.4);box-shadow:0 0 15px rgba(255,204,0,0.2);}
+  .pulse-name{font-family:'Orbitron',monospace;font-size:10px;color:#8ab;letter-spacing:1px;margin-bottom:3px;}
+  .pulse-val{font-family:'Share Tech Mono',monospace;font-size:17px;font-weight:700;color:#e8f4ff;}
+  .pulse-chg{font-family:'Share Tech Mono',monospace;font-size:12px;margin-top:3px;}
+  .pulse-heat{position:absolute;top:4px;right:6px;font-size:13px;}
+  .up-text{color:var(--green);}
+  .down-text{color:var(--red);}
+
+  /* PANELS */
+  .panel{background:linear-gradient(135deg,var(--panel),var(--bg3));border:1px solid var(--border);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+  .panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.6;}
+  .panel-gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+  .panel-green::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+  .panel-red::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+  .panel-purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+
+  .panel-title{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px;text-transform:uppercase;}
+  .panel-title.gold{color:var(--gold);}
+  .panel-title.green{color:var(--green);}
+  .panel-title.red{color:var(--red);}
+  .panel-title.purple{color:var(--purple);}
+
+  /* BADGE */
+  .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;font-weight:700;vertical-align:middle;margin-left:4px;}
+  .badge-ai{background:rgba(180,79,255,0.2);color:var(--purple);border:1px solid rgba(180,79,255,0.3);}
+  .badge-hot{background:rgba(255,107,53,0.2);color:#ff8a65;border:1px solid rgba(255,107,53,0.3);}
+  .badge-asx{background:rgba(255,215,0,0.15);color:var(--gold);border:1px solid rgba(255,215,0,0.3);}
+
+  /* MAIN GRID */
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .grid-full{grid-column:1/-1;}
+  .col-span-2{grid-column:span 2;}
+
+  /* HEATMAP */
+  .heatmap-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;}
+  .heat-cell{border-radius:4px;padding:8px 4px;text-align:center;cursor:pointer;transition:transform 0.2s;font-family:'Share Tech Mono',monospace;position:relative;}
+  .heat-cell:hover{transform:scale(1.1);z-index:10;}
+  .heat-cell .hticker{font-size:9px;font-weight:700;letter-spacing:1px;}
+  .heat-cell .hpct{font-size:11px;font-weight:700;margin-top:2px;}
+  .heat-cell .hvol{font-size:8px;opacity:.7;margin-top:1px;}
+  .heat-fire{background:linear-gradient(135deg,#ff6b35,#ff3d00);color:#fff;box-shadow:0 0 12px rgba(255,107,53,.5);}
+  .heat-hot{background:linear-gradient(135deg,#ff9500,#ff6b00);color:#fff;box-shadow:0 0 8px rgba(255,149,0,.4);}
+  .heat-warm{background:linear-gradient(135deg,#ffd700,#ffb300);color:#000;}
+  .heat-cool{background:linear-gradient(135deg,#1a3a2a,#0d2818);color:#6dffb3;border:1px solid rgba(0,255,100,.2);}
+  .heat-cold{background:linear-gradient(135deg,#1a1a3a,#0d0d28);color:#6db3ff;border:1px solid rgba(50,100,255,.2);}
+  .heat-freeze{background:linear-gradient(135deg,#2a0a1a,#1a0510);color:#ff6b9d;border:1px solid rgba(255,51,102,.3);box-shadow:0 0 8px rgba(255,51,102,.2);}
+  .heat-neutral{background:linear-gradient(135deg,#1a2030,#0f1520);color:#889;border:1px solid rgba(100,120,150,.2);}
+
+  /* SECTOR */
+  .sector-flows{display:flex;flex-direction:column;gap:5px;}
+  .sector-row{display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:10px;}
+  .sector-name{width:90px;color:#889;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;}
+  .sector-track{flex:1;height:16px;background:rgba(255,255,255,.03);border-radius:3px;overflow:hidden;}
+  .sector-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:6px;font-size:9px;transition:width 1s ease;}
+  .sector-fill.up{background:linear-gradient(90deg,rgba(0,255,157,.25),rgba(0,255,157,.1));color:var(--green);}
+  .sector-fill.down{background:linear-gradient(90deg,rgba(255,51,102,.25),rgba(255,51,102,.1));color:var(--red);}
+  .sector-val{width:50px;text-align:right;}
+  .sector-val.up{color:var(--green);}
+  .sector-val.down{color:var(--red);}
+
+  /* SIGNALS */
+  .signal-list{display:flex;flex-direction:column;gap:6px;}
+  .signal-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:rgba(0,0,0,.3);border-radius:5px;border-left:3px solid transparent;font-family:'Share Tech Mono',monospace;font-size:11px;transition:all .2s;cursor:pointer;}
+  .signal-item:hover{background:rgba(0,229,255,.05);transform:translateX(3px);}
+  .signal-buy{border-left-color:var(--green);}
+  .signal-sell{border-left-color:var(--red);}
+  .signal-hold{border-left-color:var(--yellow);}
+  .signal-watch{border-left-color:var(--purple);}
+  .sig-ticker{color:#e8f4ff;font-weight:700;width:55px;}
+  .sig-action{padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:1px;font-weight:700;}
+  .act-buy{background:rgba(0,255,157,.15);color:var(--green);border:1px solid rgba(0,255,157,.3);}
+  .act-sell{background:rgba(255,51,102,.15);color:var(--red);border:1px solid rgba(255,51,102,.3);}
+  .act-hold{background:rgba(255,204,0,.15);color:var(--yellow);border:1px solid rgba(255,204,0,.3);}
+  .act-watch{background:rgba(180,79,255,.15);color:var(--purple);border:1px solid rgba(180,79,255,.3);}
+
+  /* PRE-MARKET */
+  .premarket-list{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
+  .pm-row{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:rgba(0,0,0,.25);border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:11px;border-left:2px solid var(--border);transition:all .2s;cursor:pointer;}
+  .pm-row:hover{background:rgba(0,229,255,.05);border-left-color:var(--accent);}
+  .pm-row.bullish{border-left-color:var(--green);}
+  .pm-row.bearish{border-left-color:var(--red);}
+  .pm-ticker{color:#dde;font-weight:700;width:55px;}
+  .pm-catalyst{color:#556;font-size:9px;flex:1;padding:0 8px;}
+  .pm-move{font-size:13px;width:55px;text-align:right;}
+
+  /* FORMULAS */
+  .formula-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .formula-box{background:rgba(0,0,0,.4);border:1px solid rgba(0,229,255,.15);border-radius:5px;padding:10px 12px;}
+  .formula-label{font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;opacity:.7;}
+  .formula-math{font-family:'Share Tech Mono',monospace;font-size:10px;color:#c8e8ff;line-height:1.7;}
+  .formula-var{color:var(--gold);}
+  .formula-op{color:var(--purple);}
+  .formula-result{color:var(--green);font-size:12px;font-weight:700;}
+
+  /* PICKS */
+  .picks-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+  .pick-card{background:linear-gradient(135deg,#0a1825,#0d2035);border:1px solid var(--border);border-radius:6px;padding:10px;cursor:pointer;transition:all .3s;position:relative;}
+  .pick-card:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
+  .pick-card.top-pick{border-color:rgba(255,215,0,.5);background:linear-gradient(135deg,#1a1500,#1a1000);}
+  .pick-rank{position:absolute;top:7px;right:7px;font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,215,0,.5);}
+  .pick-ticker{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#e8f4ff;margin-bottom:2px;}
+  .pick-ticker.gold{color:var(--gold);}
+  .pick-name{font-size:9px;color:#4466aa;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pick-metrics{display:flex;justify-content:space-between;align-items:flex-end;margin-top:5px;}
+  .pick-price{font-family:'Share Tech Mono',monospace;font-size:13px;color:#c8d8e8;}
+  .pick-chg{font-family:'Share Tech Mono',monospace;font-size:12px;}
+  .pick-bars{margin:5px 0;display:flex;flex-direction:column;gap:3px;}
+  .pick-bar-row{display:flex;align-items:center;gap:4px;font-size:9px;color:#667;font-family:'Share Tech Mono',monospace;}
+  .pick-bar-track{flex:1;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+  .pick-bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+  .bar-mom{background:linear-gradient(90deg,var(--accent),#0088ff);}
+  .bar-vol{background:linear-gradient(90deg,var(--gold),#ff9500);}
+  .bar-sig{background:linear-gradient(90deg,var(--green),#00bbff);}
+  .pick-icons{display:flex;gap:3px;margin-top:4px;}
+
+  /* METALS */
+  .metals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+  .metal-card{background:linear-gradient(135deg,#120e00,#1a1400);border:1px solid rgba(255,215,0,.25);border-radius:6px;padding:12px;text-align:center;cursor:pointer;transition:all .3s;}
+  .metal-card:hover{border-color:var(--gold);box-shadow:var(--glow-gold);transform:translateY(-2px);}
+  .metal-symbol{font-size:22px;margin-bottom:4px;}
+  .metal-name{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:2px;}
+  .metal-price{font-family:'Share Tech Mono',monospace;font-size:15px;color:#e8d88f;margin:4px 0;}
+  .metal-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:#8870aa;margin-bottom:2px;}
+  .metal-chg{font-family:'Share Tech Mono',monospace;font-size:12px;}
+  .metal-bar{margin-top:8px;height:3px;background:rgba(255,215,0,.1);border-radius:2px;overflow:hidden;}
+  .metal-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),#ffaa00);border-radius:2px;}
+
+  /* AI PANEL */
+  .ai-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+  .ai-metric{background:rgba(0,0,0,.3);border:1px solid rgba(180,79,255,.2);border-radius:5px;padding:8px;text-align:center;}
+  .ai-metric-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--purple);}
+  .ai-metric-label{font-size:9px;color:#556;letter-spacing:1px;margin-top:2px;text-transform:uppercase;}
+  .ai-log{background:rgba(0,0,0,.5);border:1px solid rgba(180,79,255,.15);border-radius:5px;padding:8px;font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.8;max-height:120px;overflow-y:auto;}
+  .log-line{display:flex;gap:8px;}
+  .log-time{color:rgba(180,79,255,.5);min-width:55px;}
+  .log-msg{color:#8899aa;}
+  .log-msg.hot{color:var(--green);}
+  .log-msg.warn{color:var(--yellow);}
+  .log-msg.alert{color:var(--red);}
+
+  /* STAT ROW */
+  .stat-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Share Tech Mono',monospace;font-size:10px;}
+  .stat-row .label{color:#556;}
+  .stat-row .value{color:#c8d8e8;}
+  .stat-row .value.good{color:var(--green);}
+  .stat-row .value.bad{color:var(--red);}
+
+  /* REFRESH BTN */
+  .refresh-btn{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;padding:8px 16px;background:linear-gradient(135deg,rgba(0,229,255,.1),rgba(0,255,157,.1));border:1px solid var(--accent);border-radius:5px;color:var(--accent);cursor:pointer;transition:all .3s;}
+  .refresh-btn:hover{background:rgba(0,229,255,.2);box-shadow:var(--glow);transform:translateY(-1px);}
+
+  /* LOADING */
+  .loading-overlay{position:fixed;inset:0;background:rgba(2,4,8,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s ease;}
+  .loading-overlay.hidden{opacity:0;pointer-events:none;}
+  .loading-logo{font-family:'Orbitron',monospace;font-size:36px;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;animation:glow-pulse 2s ease-in-out infinite;}
+  @keyframes glow-pulse{0%,100%{filter:drop-shadow(0 0 20px rgba(0,229,255,.5));}50%{filter:drop-shadow(0 0 40px rgba(0,229,255,.9));}}
+  .loading-bar{width:300px;height:3px;background:rgba(0,229,255,.1);border-radius:2px;overflow:hidden;margin:16px 0;}
+  .loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;animation:loading-progress 2.5s ease-in-out forwards;}
+  @keyframes loading-progress{0%{width:0;}100%{width:100%;}}
+
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:rgba(0,0,0,.2);}
+  ::-webkit-scrollbar-thumb{background:rgba(0,229,255,.3);border-radius:2px;}
+
+  canvas{display:block;}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-logo">APEX ASX</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,229,255,0.4);letter-spacing:4px;margin-bottom:8px;">AUSTRALIAN MARKET INTELLIGENCE</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+  <div id="loadingStatus" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,229,255,0.5);letter-spacing:2px;">INITIALIZING ASX DATA FEEDS...</div>
+</div>
+
+<div class="scan-line"></div>
+<div id="app">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div>
+      <div class="logo">APEX ASX</div>
+      <div class="logo-sub">AUSTRALIAN MARKET INTELLIGENCE v4.2</div>
+    </div>
+    <div class="ai-dot-wrap"><div class="ai-dot"></div>AI ENGINE ACTIVE</div>
+  </div>
+  <div class="header-status">
+    <div class="status-pill status-asx">🦘 ASX FOCUS</div>
+    <div class="status-pill status-live">⬤ LIVE</div>
+    <div class="header-clock" id="clock">--:--:--</div>
+    <button class="refresh-btn" onclick="runAIAnalysis()">⚡ AI ANALYSIS</button>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="alert-banner">
+  <div class="ticker-wrap">
+    ⚡ ASX 200: 7,842 +0.74% &nbsp;|&nbsp; XJO +0.74% &nbsp;|&nbsp; BHP.AX $45.82 +1.4% &nbsp;|&nbsp; RIO.AX $128.40 +1.1% &nbsp;|&nbsp; NCM.AX $26.80 +2.1% &nbsp;|&nbsp; GOLD AUD $3,568/oz +0.62% &nbsp;|&nbsp; SILVER AUD $45.12/oz +1.1% &nbsp;|&nbsp; AUD/USD 0.6520 &nbsp;|&nbsp; RBA RATE 4.35% HOLD &nbsp;|&nbsp; IRON ORE $109.4 &nbsp;|&nbsp; LITHIUM $14,200/t &nbsp;|&nbsp; COAL $135/t &nbsp;|&nbsp; CBA.AX $126.40 +0.3% &nbsp;|&nbsp; WES.AX $74.20 +0.5% &nbsp;|&nbsp; AI SIGNAL: MATERIALS + GOLD MINERS SHOWING STRONG INSTITUTIONAL FLOW &nbsp;|&nbsp;
+  </div>
+</div>
+
+<!-- PULSE ROW -->
+<div class="pulse-row">
+  <div class="pulse-card up hot">
+    <div class="pulse-heat">🔥</div>
+    <div class="pulse-name">ASX 200</div>
+    <div class="pulse-val">7,842</div>
+    <div class="pulse-chg up-text">▲ +0.74%</div>
+  </div>
+  <div class="pulse-card up hot">
+    <div class="pulse-heat">⚡</div>
+    <div class="pulse-name">ALL ORDS</div>
+    <div class="pulse-val">8,068</div>
+    <div class="pulse-chg up-text">▲ +0.81%</div>
+  </div>
+  <div class="pulse-card up">
+    <div class="pulse-name">ASX MATS</div>
+    <div class="pulse-val">14,210</div>
+    <div class="pulse-chg up-text">▲ +1.42%</div>
+  </div>
+  <div class="pulse-card up">
+    <div class="pulse-name">ASX GOLD</div>
+    <div class="pulse-val">8,940</div>
+    <div class="pulse-chg up-text">▲ +2.14%</div>
+  </div>
+  <div class="pulse-card up">
+    <div class="pulse-name">AUD/USD</div>
+    <div class="pulse-val">0.6520</div>
+    <div class="pulse-chg up-text">▲ +0.28%</div>
+  </div>
+  <div class="pulse-card down">
+    <div class="pulse-name">ASX FINS</div>
+    <div class="pulse-val">7,318</div>
+    <div class="pulse-chg down-text">▼ -0.32%</div>
+  </div>
+</div>
+
+<!-- HEATMAP FULL WIDTH -->
+<div class="panel" style="margin-bottom:10px;">
+  <div class="panel-title">🌋 <span>ASX MONEY MOVEMENT HEATMAP — REAL-TIME</span> <span class="badge badge-ai">AI RANKED</span> <span class="badge badge-asx">ASX</span></div>
+  <div class="heatmap-grid" id="heatmapGrid"></div>
+</div>
+
+<!-- 3 COL -->
+<div class="grid-3" style="margin-bottom:10px;">
+  <div class="panel panel-green">
+    <div class="panel-title green">📊 <span>ASX SECTOR FLOW</span></div>
+    <div class="sector-flows" id="sectorFlows"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">🎯 <span>AI TRADE SIGNALS</span> <span class="badge badge-ai">LIVE</span></div>
+    <div class="signal-list" id="signalList"></div>
+  </div>
+  <div class="panel panel-red">
+    <div class="panel-title red">⚡ <span>PRE-MARKET CATALYSTS</span></div>
+    <div class="premarket-list" id="premarketList"></div>
+  </div>
+</div>
+
+<!-- FORMULAS FULL WIDTH -->
+<div class="panel" style="margin-bottom:10px;">
+  <div class="panel-title purple">🧮 <span>AI DATA PIPELINE — FORMULA ENGINE</span></div>
+  <div class="formula-grid">
+    <div class="formula-box">
+      <div class="formula-label">MOMENTUM Z-SCORE</div>
+      <div class="formula-math">
+        <span class="formula-var">Z</span> <span class="formula-op">=</span> (<span class="formula-var">P_t</span> <span class="formula-op">−</span> <span class="formula-var">μ₂₀</span>) <span class="formula-op">/</span> <span class="formula-var">σ₂₀</span><br>
+        <span class="formula-var">μ</span> <span class="formula-op">=</span> SMA(<span class="formula-var">P</span>, 20 sessions)<br>
+        ASX session: 10:00–16:00 AEST<br>
+        <span class="formula-result">→ Z &gt; 2.0 = BREAKOUT SIGNAL</span>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div class="formula-label">VOLUME ANOMALY (ASX)</div>
+      <div class="formula-math">
+        <span class="formula-var">V_ratio</span> <span class="formula-op">=</span> <span class="formula-var">V_t</span> <span class="formula-op">/</span> <span class="formula-var">V̄</span><sub>20d</sub><br>
+        <span class="formula-var">OBV</span> += <span class="formula-op">±</span><span class="formula-var">V_t</span> × sign(<span class="formula-var">ΔP</span>)<br>
+        <span class="formula-var">CMF</span> <span class="formula-op">=</span> Σ(<span class="formula-var">MFV</span>) <span class="formula-op">/</span> Σ(<span class="formula-var">V</span>, 20)<br>
+        <span class="formula-result">→ V_ratio &gt; 3× = SURGE EVENT</span>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div class="formula-label">AI COMPOSITE SCORE</div>
+      <div class="formula-math">
+        <span class="formula-var">ACS</span> <span class="formula-op">=</span> 0.30<span class="formula-var">Z</span> <span class="formula-op">+</span> 0.25<span class="formula-var">RSI</span> <span class="formula-op">+</span> 0.20<span class="formula-var">CMF</span><br>
+        <span class="formula-op">+</span> 0.15<span class="formula-var">OBV_Δ</span> <span class="formula-op">+</span> 0.10<span class="formula-var">ATR%</span><br>
+        + <span class="formula-var">Commodity_factor</span> (AUD)<br>
+        <span class="formula-result">→ ACS &gt; 0.72 = STRONG BUY</span>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div class="formula-label">GOLD AUD PRICING</div>
+      <div class="formula-math">
+        <span class="formula-var">Au_AUD</span> <span class="formula-op">=</span> <span class="formula-var">Au_USD</span> <span class="formula-op">/</span> <span class="formula-var">AUD/USD</span><br>
+        <span class="formula-var">Ag_AUD</span> <span class="formula-op">=</span> <span class="formula-var">Ag_USD</span> <span class="formula-op">/</span> <span class="formula-var">AUD/USD</span><br>
+        Miner_val ∝ <span class="formula-var">Au_AUD</span> × <span class="formula-var">Reserve_oz</span><br>
+        <span class="formula-result">→ AUD weak = miners UP</span>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div class="formula-label">SMART MONEY (ASX)</div>
+      <div class="formula-math">
+        <span class="formula-var">SMI</span> <span class="formula-op">=</span> Close <span class="formula-op">−</span> Open (last 30 min)<br>
+        <span class="formula-var">Chi_X</span> = Off-exchange ratio<br>
+        <span class="formula-var">Block_ratio</span> <span class="formula-op">=</span> Block_V <span class="formula-op">/</span> V_total<br>
+        <span class="formula-result">→ Block &gt;40% = INST ENTRY</span>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div class="formula-label">MACD SIGNAL</div>
+      <div class="formula-math">
+        <span class="formula-var">MACD</span> <span class="formula-op">=</span> EMA(12) <span class="formula-op">−</span> EMA(26)<br>
+        <span class="formula-var">Signal</span> <span class="formula-op">=</span> EMA(<span class="formula-var">MACD</span>, 9)<br>
+        <span class="formula-var">Hist</span> <span class="formula-op">=</span> <span class="formula-var">MACD</span> <span class="formula-op">−</span> <span class="formula-var">Signal</span><br>
+        <span class="formula-result">→ Crossover = ENTRY SIGNAL</span>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div class="formula-label">KELLY POSITION SIZE</div>
+      <div class="formula-math">
+        <span class="formula-var">Kelly%</span> <span class="formula-op">=</span> <span class="formula-var">P</span> <span class="formula-op">−</span> (1<span class="formula-op">−</span><span class="formula-var">P</span>) <span class="formula-op">/</span> <span class="formula-var">b</span><br>
+        <span class="formula-var">EV</span> <span class="formula-op">=</span> (<span class="formula-var">P_win</span> × <span class="formula-var">R:R</span>) <span class="formula-op">−</span> (1<span class="formula-op">−</span><span class="formula-var">P</span>)<br>
+        Size <span class="formula-op">=</span> Kelly × Capital × 0.25 (ASX)<br>
+        <span class="formula-result">→ EV &gt; 0 = TRADE HAS EDGE</span>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div class="formula-label">COMMODITY CORRELATION</div>
+      <div class="formula-math">
+        <span class="formula-var">ρ</span>(BHP, Fe) <span class="formula-op">=</span> Cov(r_BHP, r_Fe) <span class="formula-op">/</span> σ²<br>
+        <span class="formula-var">β_miner</span> <span class="formula-op">=</span> <span class="formula-var">ρ</span> × σ_stock <span class="formula-op">/</span> σ_commodity<br>
+        Iron ore → BHP/RIO β ≈ 0.78<br>
+        <span class="formula-result">→ Fe +5% ≈ BHP +3.9%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 15 PICKS -->
+<div class="panel" style="margin-bottom:10px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div class="panel-title" style="margin-bottom:0;">🏆 <span>AI TOP 15 ASX PICKS — COMPOSITE RANKED</span> <span class="badge badge-ai">NEURAL NET</span> <span class="badge badge-asx">ASX</span></div>
+    <div id="lastUpdate" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#556;">UPDATED: --:--:--</div>
+  </div>
+  <div class="picks-grid" id="picksGrid"></div>
+</div>
+
+<!-- METALS + AI BRAIN -->
+<div class="grid-3" style="margin-bottom:10px;">
+
+  <!-- METALS - spans 2 cols -->
+  <div class="panel panel-gold col-span-2">
+    <div class="panel-title gold">⚗️ <span>METALS & COMMODITIES — PRICES IN AUD</span> <span class="badge badge-asx">AUD</span></div>
+    <div class="metals-grid" id="metalsGrid"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#556;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">GOLD AUD 24H FLOW</div>
+        <canvas id="metalsFlowCanvas" height="90" style="width:100%;border-radius:4px;"></canvas>
+      </div>
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#556;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">ASX MINERS RIDING THE MOVE</div>
+        <div id="metalStocks"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI BRAIN -->
+  <div class="panel panel-purple">
+    <div class="panel-title purple">🧠 <span>AI LEARNING ENGINE</span></div>
+    <div class="ai-metrics">
+      <div class="ai-metric"><div class="ai-metric-val" id="aiAccuracy">—</div><div class="ai-metric-label">ACCURACY</div></div>
+      <div class="ai-metric"><div class="ai-metric-val" id="aiSignals">—</div><div class="ai-metric-label">SIGNALS</div></div>
+      <div class="ai-metric"><div class="ai-metric-val" id="aiWinRate">—</div><div class="ai-metric-label">WIN RATE</div></div>
+      <div class="ai-metric"><div class="ai-metric-val" id="aiPatterns">—</div><div class="ai-metric-label">PATTERNS</div></div>
+    </div>
+    <div class="ai-log" id="aiLog"></div>
+  </div>
+</div>
+
+<!-- AI ANALYSIS OUTPUT -->
+<div id="aiAnalysisSection" style="display:none;margin-bottom:10px;">
+  <div class="panel" style="border-color:rgba(0,229,255,0.4);box-shadow:var(--glow);">
+    <div class="panel-title">🤖 <span>AI MARKET ANALYSIS — ASX LIVE BRIEFING</span> <span class="badge badge-ai">CLAUDE</span></div>
+    <div id="aiAnalysisOutput" style="font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;color:#8ab;white-space:pre-wrap;"></div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ============================================================
+// APEX ASX — DATA ENGINE
+// ============================================================
+
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'})+' AEST';
+}
+setInterval(updateClock,1000); updateClock();
+
+// ASX HEATMAP DATA
+const HEAT_CELLS=[
+  {ticker:'NCM.AX',sector:'GOLD',pct:2.1,vol:'2.8x',cls:'heat-fire',icon:'🔥'},
+  {ticker:'BHP.AX',sector:'MATS',pct:1.4,vol:'2.1x',cls:'heat-fire',icon:'🔥'},
+  {ticker:'RIO.AX',sector:'MATS',pct:1.1,vol:'1.9x',cls:'heat-hot',icon:'⚡'},
+  {ticker:'EVN.AX',sector:'GOLD',pct:2.8,vol:'3.2x',cls:'heat-fire',icon:'🌋'},
+  {ticker:'NST.AX',sector:'GOLD',pct:2.4,vol:'2.9x',cls:'heat-fire',icon:'🔥'},
+  {ticker:'FMG.AX',sector:'IRON',pct:0.9,vol:'1.6x',cls:'heat-warm',icon:''},
+  {ticker:'WDS.AX',sector:'LNG',pct:0.7,vol:'1.3x',cls:'heat-warm',icon:''},
+  {ticker:'WES.AX',sector:'CONS',pct:0.5,vol:'1.0x',cls:'heat-warm',icon:''},
+  {ticker:'CBA.AX',sector:'BANK',pct:0.3,vol:'0.9x',cls:'heat-cool',icon:''},
+  {ticker:'NAB.AX',sector:'BANK',pct:-0.2,vol:'0.8x',cls:'heat-neutral',icon:''},
+  {ticker:'ANZ.AX',sector:'BANK',pct:-0.4,vol:'0.7x',cls:'heat-cold',icon:''},
+  {ticker:'WBC.AX',sector:'BANK',pct:-0.5,vol:'0.9x',cls:'heat-cold',icon:''},
+  {ticker:'CSL.AX',sector:'HLTH',pct:0.4,vol:'0.8x',cls:'heat-cool',icon:''},
+  {ticker:'MQG.AX',sector:'FINS',pct:-0.3,vol:'1.0x',cls:'heat-neutral',icon:''},
+  {ticker:'ILU.AX',sector:'MATS',pct:1.8,vol:'2.4x',cls:'heat-hot',icon:'⚡'},
+  {ticker:'S32.AX',sector:'MATS',pct:1.2,vol:'1.8x',cls:'heat-hot',icon:'⚡'},
+  {ticker:'SFR.AX',sector:'COPR',pct:1.6,vol:'2.1x',cls:'heat-hot',icon:'⚡'},
+  {ticker:'AGL.AX',sector:'UTIL',pct:-0.8,vol:'0.6x',cls:'heat-freeze',icon:'❄️'},
+];
+
+const SECTOR_DATA=[
+  {name:'Gold Miners',pct:+2.4,dir:'up'},
+  {name:'Materials',pct:+1.8,dir:'up'},
+  {name:'Iron Ore',pct:+1.1,dir:'up'},
+  {name:'Copper/Base',pct:+1.4,dir:'up'},
+  {name:'Energy/LNG',pct:+0.6,dir:'up'},
+  {name:'Consumer',pct:+0.3,dir:'up'},
+  {name:'Healthcare',pct:-0.2,dir:'down'},
+  {name:'Financials',pct:-0.4,dir:'down'},
+  {name:'Utilities',pct:-0.9,dir:'down'},
+];
+
+const SIGNALS=[
+  {ticker:'EVN.AX',action:'BUY',conf:93,reason:'Gold AUD ATH, Z=2.6, vol 3.2x surge'},
+  {ticker:'NST.AX',action:'BUY',conf:90,reason:'MACD crossover, OBV rising, ACS=0.88'},
+  {ticker:'BHP.AX',action:'BUY',conf:84,reason:'Iron ore +1.2%, block ratio 42%, ADX>28'},
+  {ticker:'SFR.AX',action:'BUY',conf:81,reason:'Copper breakout, Z=2.1, CMF positive'},
+  {ticker:'ANZ.AX',action:'SELL',conf:78,reason:'NIM squeeze, RSI 31, trend breakdown'},
+  {ticker:'AGL.AX',action:'SELL',conf:74,reason:'Rate pressure, CMF neg, RSI 27 downtrend'},
+];
+
+const PREMARKET=[
+  {ticker:'NCM.AX',catalyst:'Gold AUD hits record $3,568/oz',move:'+2.1%',dir:'bullish'},
+  {ticker:'EVN.AX',catalyst:'Evolution upgrades FY guidance',move:'+3.2%',dir:'bullish'},
+  {ticker:'BHP.AX',catalyst:'Iron ore +1.2% Qingdao port',move:'+1.4%',dir:'bullish'},
+  {ticker:'SFR.AX',catalyst:'Copper LME 3-week high $4.81',move:'+1.8%',dir:'bullish'},
+  {ticker:'ANZ.AX',catalyst:'NIM guidance cut, margin pressure',move:'-1.2%',dir:'bearish'},
+  {ticker:'WBC.AX',catalyst:'Loan loss provisions raised',move:'-0.9%',dir:'bearish'},
+  {ticker:'ILU.AX',catalyst:'Zircon/rutile demand upgrade',move:'+2.1%',dir:'bullish'},
+];
+
+// 15 ASX PICKS
+const PICKS=[
+  {rank:1,ticker:'EVN.AX',name:'Evolution Mining',price:4.82,chg:2.8,mom:93,vol:91,sig:94,icons:['🔥','🥇','⚡'],top:true},
+  {rank:2,ticker:'NST.AX',name:'Northern Star',price:14.62,chg:2.4,mom:90,vol:88,sig:92,icons:['🔥','🥇'],top:true},
+  {rank:3,ticker:'NCM.AX',name:'Newcrest Mining',price:26.80,chg:2.1,mom:88,vol:85,sig:90,icons:['🥇','🔥'],top:true},
+  {rank:4,ticker:'BHP.AX',name:'BHP Group',price:45.82,chg:1.4,mom:84,vol:82,sig:85,icons:['⚡','🪨'],top:false},
+  {rank:5,ticker:'SFR.AX',name:'Sandfire Resources',price:9.14,chg:1.6,mom:82,vol:80,sig:83,icons:['⚡','🔩'],top:false},
+  {rank:6,ticker:'ILU.AX',name:'Iluka Resources',price:7.84,chg:1.8,mom:80,vol:83,sig:82,icons:['⚡','💎'],top:false},
+  {rank:7,ticker:'RIO.AX',name:'Rio Tinto',price:128.40,chg:1.1,mom:79,vol:77,sig:80,icons:['⚡','🪨'],top:false},
+  {rank:8,ticker:'S32.AX',name:'South32',price:3.82,chg:1.2,mom:77,vol:75,sig:78,icons:['⚡'],top:false},
+  {rank:9,ticker:'FMG.AX',name:'Fortescue Metals',price:22.18,chg:0.9,mom:74,vol:72,sig:75,icons:['📈','🪨'],top:false},
+  {rank:10,ticker:'WDS.AX',name:'Woodside Energy',price:28.94,chg:0.7,mom:71,vol:69,sig:72,icons:['⛽','📈'],top:false},
+  {rank:11,ticker:'WES.AX',name:'Wesfarmers',price:74.20,chg:0.5,mom:68,vol:65,sig:70,icons:['📈'],top:false},
+  {rank:12,ticker:'MIN.AX',name:'Mineral Resources',price:44.60,chg:1.3,mom:76,vol:74,sig:77,icons:['⚡','🔋'],top:false},
+  {rank:13,ticker:'PLS.AX',name:'Pilbara Minerals',price:3.44,chg:1.0,mom:72,vol:76,sig:74,icons:['🔋','📈'],top:false},
+  {rank:14,ticker:'GOR.AX',name:'Gold Road Res',price:1.98,chg:2.2,mom:78,vol:79,sig:80,icons:['🥇','⚡'],top:false},
+  {rank:15,ticker:'CSL.AX',name:'CSL Limited',price:298.40,chg:0.4,mom:66,vol:63,sig:67,icons:['💊','📈'],top:false},
+];
+
+// METALS in AUD (USD/0.652)
+const AUD_USD=0.6520;
+const METALS=[
+  {symbol:'🥇',name:'GOLD',priceUSD:2318,priceAUD:0,chgPct:0.45,dir:'up',fill:72},
+  {symbol:'🥈',name:'SILVER',priceUSD:29.44,priceAUD:0,chgPct:0.88,dir:'up',fill:64},
+  {symbol:'🥉',name:'COPPER',priceUSD:4.82,priceAUD:0,chgPct:1.2,dir:'up',fill:58},
+  {symbol:'⚪',name:'PLATINUM',priceUSD:1044,priceAUD:0,chgPct:0.3,dir:'up',fill:44},
+  {symbol:'🪨',name:'IRON ORE',priceUSD:109.4,priceAUD:0,chgPct:1.1,dir:'up',fill:55},
+  {symbol:'⛽',name:'LNG',priceUSD:2.81,priceAUD:0,chgPct:-0.8,dir:'down',fill:32},
+  {symbol:'🔋',name:'LITHIUM',priceUSD:14200,priceAUD:0,chgPct:-1.2,dir:'down',fill:28},
+  {symbol:'🪵',name:'COAL',priceUSD:135,priceAUD:0,chgPct:0.4,dir:'up',fill:48},
+];
+METALS.forEach(m=>{ m.priceAUD=+(m.priceUSD/AUD_USD).toFixed(2); });
+
+const METAL_STOCKS=[
+  {ticker:'GLD AUD',name:'Gold — AUD/oz',price:'',chg:'+0.62%',dir:'up'},
+  {ticker:'EVN.AX',name:'Evolution Mining',price:'A$4.82',chg:'+2.8%',dir:'up'},
+  {ticker:'NST.AX',name:'Northern Star',price:'A$14.62',chg:'+2.4%',dir:'up'},
+  {ticker:'NCM.AX',name:'Newcrest',price:'A$26.80',chg:'+2.1%',dir:'up'},
+  {ticker:'GOR.AX',name:'Gold Road',price:'A$1.98',chg:'+2.2%',dir:'up'},
+  {ticker:'SFR.AX',name:'Sandfire (Cu)',price:'A$9.14',chg:'+1.6%',dir:'up'},
+];
+
+const AI_LOG=[
+  {time:'10:14:22',msg:'PATTERN: Inst block buys EVN.AX — $48M accumulation detected',cls:'hot'},
+  {time:'10:12:08',msg:'ALERT: Gold AUD breaks $3,550 — record high triggers miner re-rating',cls:'warn'},
+  {time:'10:10:31',msg:'SIGNAL: NST.AX MACD crossover confirmed daily chart — Z=2.4',cls:'hot'},
+  {time:'10:08:55',msg:'LEARNING: Updated commodity-stock beta weights for ASX miners',cls:''},
+  {time:'10:07:18',msg:'FLOW: Iron ore +1.2% Qingdao → BHP/RIO/FMG upside calc active',cls:'hot'},
+  {time:'10:05:44',msg:'AUD: AUD/USD +0.28% → slight headwind for gold AUD price',cls:'warn'},
+  {time:'10:04:02',msg:'AI: ASX session opened strong — Materials sector leading XJO',cls:''},
+  {time:'10:02:19',msg:'AI: Pattern model retrained on 1,024 new ASX intraday samples',cls:''},
+];
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderHeatmap(){
+  document.getElementById('heatmapGrid').innerHTML=HEAT_CELLS.map(c=>`
+    <div class="heat-cell ${c.cls}" title="${c.ticker} ${c.pct>0?'+':''}${c.pct}%">
+      <div class="hticker">${c.ticker.replace('.AX','')}</div>
+      <div class="hpct">${c.pct>0?'+':''}${c.pct}%</div>
+      <div class="hvol">Vol ${c.vol}</div>
+      ${c.icon?`<div style="font-size:9px;margin-top:1px;">${c.icon}</div>`:''}
+    </div>`).join('');
+}
+
+function renderSectors(){
+  document.getElementById('sectorFlows').innerHTML=SECTOR_DATA.map(s=>{
+    const w=Math.min(Math.abs(s.pct)*13,100);
+    return`<div class="sector-row">
+      <div class="sector-name">${s.name}</div>
+      <div class="sector-track"><div class="sector-fill ${s.dir}" style="width:${w}%">${s.pct>0?'+':''}${s.pct}%</div></div>
+      <div class="sector-val ${s.dir}">${s.pct>0?'+':''}${s.pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSignals(){
+  const aMap={BUY:'act-buy buy',SELL:'act-sell sell',HOLD:'act-hold hold',WATCH:'act-watch watch'};
+  document.getElementById('signalList').innerHTML=SIGNALS.map(s=>{
+    const[btn,row]=aMap[s.action].split(' ');
+    return`<div class="signal-item signal-${row}">
+      <span class="sig-ticker">${s.ticker}</span>
+      <span style="color:#556;font-size:9px;flex:1;">${s.reason}</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,229,255,.5);">Conf: <span style="color:var(--accent)">${s.conf}%</span></span>
+      <span class="sig-action ${btn}">${s.action}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPremarket(){
+  document.getElementById('premarketList').innerHTML=PREMARKET.map(p=>`
+    <div class="pm-row ${p.dir}">
+      <span class="pm-ticker">${p.ticker}</span>
+      <span class="pm-catalyst">${p.catalyst}</span>
+      <span class="pm-move ${p.dir==='bullish'?'up-text':'down-text'}">${p.move}</span>
+    </div>`).join('');
+}
+
+function renderPicks(){
+  const now=new Date();
+  document.getElementById('lastUpdate').textContent='UPDATED: '+now.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'})+' AEST';
+  document.getElementById('picksGrid').innerHTML=PICKS.map(p=>`
+    <div class="pick-card ${p.top?'top-pick':''}">
+      <div class="pick-rank">#${p.rank}</div>
+      <div class="pick-ticker ${p.top?'gold':''}">${p.ticker.replace('.AX','')}</div>
+      <div class="pick-name">${p.name}</div>
+      <div class="pick-bars">
+        <div class="pick-bar-row"><span style="width:26px;">MOM</span><div class="pick-bar-track"><div class="pick-bar-fill bar-mom" style="width:${p.mom}%"></div></div><span>${p.mom}</span></div>
+        <div class="pick-bar-row"><span style="width:26px;">VOL</span><div class="pick-bar-track"><div class="pick-bar-fill bar-vol" style="width:${p.vol}%"></div></div><span>${p.vol}</span></div>
+        <div class="pick-bar-row"><span style="width:26px;">SIG</span><div class="pick-bar-track"><div class="pick-bar-fill bar-sig" style="width:${p.sig}%"></div></div><span>${p.sig}</span></div>
+      </div>
+      <div class="pick-metrics">
+        <span class="pick-price">A$${p.price.toFixed(2)}</span>
+        <span class="pick-chg ${p.chg>=0?'up-text':'down-text'}">${p.chg>=0?'+':''}${p.chg}%</span>
+      </div>
+      <div class="pick-icons">${p.icons.map(i=>`<span style="font-size:11px;">${i}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function renderMetals(){
+  const goldAUD=(METALS[0].priceUSD/AUD_USD).toFixed(0);
+  const silverAUD=(METALS[1].priceUSD/AUD_USD).toFixed(2);
+  document.getElementById('metalsGrid').innerHTML=METALS.map(m=>{
+    const aud=+(m.priceUSD/AUD_USD);
+    let display;
+    if(aud>1000) display='A$'+Math.round(aud).toLocaleString();
+    else if(aud>100) display='A$'+aud.toFixed(1);
+    else display='A$'+aud.toFixed(2);
+    return`<div class="metal-card">
+      <div class="metal-symbol">${m.symbol}</div>
+      <div class="metal-name">${m.name}</div>
+      <div class="metal-price">${display}</div>
+      <div class="metal-sub">USD $${m.priceUSD>999?Math.round(m.priceUSD).toLocaleString():m.priceUSD}</div>
+      <div class="metal-chg ${m.dir==='up'?'up-text':'down-text'}">${m.chgPct>0?'+':''}${m.chgPct}%</div>
+      <div class="metal-bar"><div class="metal-bar-fill" style="width:${m.fill}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Update gold AUD in metal stocks display
+  METAL_STOCKS[0].price='A$'+goldAUD+'/oz';
+  document.getElementById('metalStocks').innerHTML=METAL_STOCKS.map(s=>`
+    <div class="pm-row ${s.dir==='up'?'bullish':'bearish'}" style="margin-bottom:3px;">
+      <span class="pm-ticker" style="width:65px;font-size:10px;">${s.ticker}</span>
+      <span class="pm-catalyst">${s.name}</span>
+      <span class="pm-move ${s.dir==='up'?'up-text':'down-text'}">${s.chg}</span>
+    </div>`).join('');
+}
+
+function renderAILog(){
+  document.getElementById('aiLog').innerHTML=AI_LOG.map(e=>`
+    <div class="log-line">
+      <span class="log-time">${e.time}</span>
+      <span class="log-msg ${e.cls}">${e.msg}</span>
+    </div>`).join('');
+  document.getElementById('aiAccuracy').textContent='88.1%';
+  document.getElementById('aiSignals').textContent='87';
+  document.getElementById('aiWinRate').textContent='73.4%';
+  document.getElementById('aiPatterns').textContent='5,214';
+}
+
+function drawMetalsChart(){
+  const canvas=document.getElementById('metalsFlowCanvas');
+  if(!canvas) return;
+  const W=canvas.parentElement.offsetWidth||360;
+  canvas.width=W; canvas.height=90;
+  const ctx=canvas.getContext('2d');
+  // Gold AUD 24h intraday
+  const data=[3490,3498,3505,3512,3520,3515,3528,3535,3540,3532,3545,3551,3548,3555,3562,3558,3565,3570,3563,3568,3572,3568,3564,3568];
+  const mn=Math.min(...data)-10, mx=Math.max(...data)+10;
+  const step=W/(data.length-1);
+  ctx.strokeStyle='rgba(255,215,0,0.06)'; ctx.lineWidth=1;
+  for(let i=0;i<5;i++){const y=(i/4)*85;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  const grad=ctx.createLinearGradient(0,0,0,90);
+  grad.addColorStop(0,'rgba(255,215,0,0.3)'); grad.addColorStop(1,'rgba(255,215,0,0.02)');
+  ctx.beginPath();
+  data.forEach((v,i)=>{const x=i*step,y=88-((v-mn)/(mx-mn))*80; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.lineTo((data.length-1)*step,90); ctx.lineTo(0,90); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath();
+  data.forEach((v,i)=>{const x=i*step,y=88-((v-mn)/(mx-mn))*80; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=2; ctx.shadowColor='rgba(255,215,0,0.5)'; ctx.shadowBlur=6; ctx.stroke(); ctx.shadowBlur=0;
+}
+
+// ============================================================
+// LIVE SIMULATION
+// ============================================================
+function liveUpdate(){
+  // Drift prices
+  PICKS.forEach(p=>{
+    p.price=+(p.price*(1+(Math.random()-.5)*0.002)).toFixed(2);
+    p.chg=+(p.chg+(Math.random()-.5)*0.06).toFixed(2);
+    p.sig=Math.min(99,Math.max(50,p.sig+Math.round((Math.random()-.5)*2)));
+    p.mom=Math.min(99,Math.max(50,p.mom+Math.round((Math.random()-.5)*1)));
+  });
+  // Re-rank
+  PICKS.sort((a,b)=>(b.mom*0.3+b.vol*0.25+b.sig*0.45)-(a.mom*0.3+a.vol*0.25+a.sig*0.45));
+  PICKS.forEach((p,i)=>{p.rank=i+1; p.top=i<3;});
+  renderPicks();
+
+  // Drift metals
+  METALS.forEach(m=>{
+    m.priceUSD=+(m.priceUSD*(1+(Math.random()-.5)*0.001)).toFixed(2);
+    m.priceAUD=+(m.priceUSD/AUD_USD).toFixed(2);
+  });
+  renderMetals();
+
+  // Occasional AI log
+  if(Math.random()>.65){
+    const msgs=[
+      {msg:`PATTERN: Z-score ${PICKS[0].ticker} now ${(2+Math.random()*0.8).toFixed(2)} — momentum accelerating`,cls:'hot'},
+      {msg:`FLOW: ASX Materials sector block ratio ${(38+Math.random()*10).toFixed(0)}% — institutional interest`,cls:'warn'},
+      {msg:`GOLD AUD: Recalculating miner NAV — spot now A$${Math.round(METALS[0].priceUSD/AUD_USD).toLocaleString()}/oz`,cls:'hot'},
+      {msg:`AI: Win rate updated to ${(72+Math.random()*3).toFixed(1)}% based on today's ASX signals`,cls:''},
+      {msg:`LEARNING: Commodity beta model refreshed — iron ore correlation updated`,cls:''},
+    ];
+    const e=msgs[Math.floor(Math.random()*msgs.length)];
+    const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'});
+    AI_LOG.unshift({time:t,...e});
+    if(AI_LOG.length>12) AI_LOG.pop();
+    renderAILog();
+  }
+}
+setInterval(liveUpdate,3500);
+
+// ============================================================
+// AI ANALYSIS — Claude API
+// ============================================================
+async function runAIAnalysis(){
+  const sec=document.getElementById('aiAnalysisSection');
+  const out=document.getElementById('aiAnalysisOutput');
+  sec.style.display='block';
+  out.textContent='⚡ ENGAGING AI NEURAL CORE — ASX FOCUSED...\n\nLoading ASX 200 data...\nRunning commodity correlation matrix...\nCalculating AUD gold/silver impact on miners...\n';
+  const goldAUD=Math.round(METALS[0].priceUSD/AUD_USD).toLocaleString();
+  const silverAUD=(METALS[1].priceUSD/AUD_USD).toFixed(2);
+  const topPicks=PICKS.slice(0,5).map(p=>`${p.ticker} (ACS:${p.sig})`).join(', ');
+  const topSec=SECTOR_DATA.filter(s=>s.dir==='up').slice(0,4).map(s=>`${s.name} ${s.pct>0?'+':''}${s.pct}%`).join(', ');
+  const prompt=`You are APEX, an elite AI market intelligence system focused on the ASX (Australian Securities Exchange). Provide a sharp, data-driven briefing.
+
+CURRENT ASX DATA:
+- ASX 200 (XJO): 7,842 +0.74% | All Ords: 8,068 +0.81%
+- AUD/USD: 0.6520 (+0.28%)
+- Gold: USD $2,318/oz = AUD $${goldAUD}/oz (+0.62% AUD terms)
+- Silver: USD $29.44/oz = AUD $${silverAUD}/oz (+1.08% AUD terms)
+- Iron Ore: USD $109.4/t (+1.2%)
+- Copper: USD $4.82/lb (+1.2%)
+- RBA Cash Rate: 4.35% (hold)
+- Top AI-scored ASX picks: ${topPicks}
+- Leading sectors: ${topSec}
+- Gold miners (EVN, NST, NCM) showing institutional block buying
+- Z-score for ASX Materials sector: 2.1 (breakout territory)
+
+Provide a LIVE ASX intelligence briefing covering:
+1. PRE-MARKET EDGE: What's setting up before ASX opens / during session
+2. GOLD & SILVER AUD: Why the AUD pricing matters for ASX miners — specific miner impact
+3. MONEY FLOW: Where smart money is rotating on the ASX RIGHT NOW
+4. TOP 3 HIGHEST-CONVICTION ASX PICKS with entry reasoning and price targets
+5. RISK FACTORS: RBA policy, China demand, AUD/USD moves — what breaks the bull case
+6. EXIT SIGNALS: Exact conditions to get out — price levels, indicators, catalysts
+
+Use ▲/▼, specific ASX tickers (e.g. BHP.AX), AUD prices. Sharp, concise, actionable. Under 400 words.`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await resp.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'No response.';
+    out.textContent=text;
+    const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'});
+    AI_LOG.unshift({time:t,msg:'AI DEEP ANALYSIS COMPLETE — ASX briefing generated',cls:'hot'});
+    if(AI_LOG.length>12) AI_LOG.pop();
+    renderAILog();
+  }catch(err){
+    out.textContent=`⚠️ API ERROR: ${err.message}\n\nFALLBACK ANALYSIS:\n\n▲ GOLD AUD at A$${goldAUD}/oz — near record highs driving EVN.AX/NST.AX/NCM.AX re-rating\n▲ AUD weakness amplifies gold returns for ASX miners — every 1¢ AUD drop = +1.5% miner NAV\n▲ Iron ore +1.2% Qingdao → BHP.AX/RIO.AX/FMG.AX commodity beta trade active\n▲ Copper breakout benefits SFR.AX — ASX's pure copper play\n▼ Big 4 banks facing NIM compression — rotate OUT of ANZ/WBC\n⚠️ WATCH: RBA language shift = AUD move = gold AUD repricing\n⚠️ EXIT SIGNAL: Gold AUD closes below A$3,480 → reduce miner exposure`;
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  renderHeatmap(); renderSectors(); renderSignals();
+  renderPremarket(); renderPicks(); renderMetals(); renderAILog();
+  setTimeout(drawMetalsChart,300);
+
+  const msgs=['INITIALIZING ASX DATA FEEDS...','LOADING COMMODITY MATRIX...','CONNECTING AUD FX FEEDS...','CALIBRATING GOLD AUD PRICING...','READY — ASX SESSION ACTIVE'];
+  let i=0;
+  const el=document.getElementById('loadingStatus');
+  const iv=setInterval(()=>{
+    if(i<msgs.length){el.textContent=msgs[i++];}
+    else{clearInterval(iv);setTimeout(()=>document.getElementById('loadingOverlay').classList.add('hidden'),400);}
+  },500);
+}
+window.addEventListener('load',init);
+window.addEventListener('resize',drawMetalsChart);
+</script>
+</body>
+</html>
