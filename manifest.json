@@ -1,1 +1,9 @@
+{
+  "name": "Apex ASX Market Intelligence",
+  "short_name": "Apex ASX",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#020408",
+  "theme_color": "#020408"
+}
 
