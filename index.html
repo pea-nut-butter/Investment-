@@ -1,823 +1,863 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APEX ASX MARKET INTELLIGENCE</title>
-<link rel="manifest" href="manifest.json">
-  
+<title>APEX ASX — Live Market Intelligence</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+:root{
+  --bg:#020408;--bg3:#0a1520;--panel:#0d1e2e;
+  --accent:#00e5ff;--accent2:#00ff9d;
+  --gold:#ffd700;--red:#ff3366;--green:#00ff9d;
+  --yellow:#ffcc00;--purple:#b44fff;
+  --border:rgba(0,229,255,0.15);--border2:rgba(0,229,255,0.35);
+  --glow:0 0 18px rgba(0,229,255,0.28);
+  --glow-gold:0 0 18px rgba(255,215,0,0.35);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:#c8d8e8;font-family:'Rajdhani',sans-serif;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.scan{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,229,255,0.7),transparent);animation:scan 7s linear infinite;z-index:1;pointer-events:none;}
+@keyframes scan{0%{top:0;opacity:1}95%{opacity:.4}100%{top:100vh;opacity:0}}
+#app{position:relative;z-index:2;padding:10px;}
 
-  :root {
-    --bg:#020408;--bg2:#060d14;--bg3:#0a1520;
-    --panel:#0d1e2e;--panel2:#112233;
-    --accent:#00e5ff;--accent2:#00ff9d;--accent3:#ff6b35;
-    --gold:#ffd700;--red:#ff3366;--green:#00ff9d;
-    --yellow:#ffcc00;--purple:#b44fff;
-    --border:rgba(0,229,255,0.18);--border2:rgba(0,229,255,0.35);
-    --glow:0 0 20px rgba(0,229,255,0.3);
-    --glow-gold:0 0 20px rgba(255,215,0,0.4);
-    --glow-red:0 0 20px rgba(255,51,102,0.4);
-    --glow-green:0 0 20px rgba(0,255,157,0.4);
-  }
+.load-overlay{position:fixed;inset:0;background:rgba(2,4,8,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s;}
+.load-overlay.gone{opacity:0;pointer-events:none;}
+.load-logo{font-family:'Orbitron',monospace;font-size:42px;font-weight:900;background:linear-gradient(90deg,#00e5ff,#00ff9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gp 2s ease-in-out infinite;}
+@keyframes gp{0%,100%{filter:drop-shadow(0 0 12px rgba(0,229,255,.4))}50%{filter:drop-shadow(0 0 35px rgba(0,229,255,.9))}}
+.load-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,229,255,.35);letter-spacing:5px;margin:6px 0 24px;}
+.load-bar{width:300px;height:3px;background:rgba(0,229,255,.08);border-radius:2px;overflow:hidden;margin-bottom:14px;}
+.load-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .5s ease;}
+.load-status{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,229,255,.45);letter-spacing:2px;text-align:center;max-width:360px;}
 
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:#c8d8e8;font-family:'Rajdhani',sans-serif;overflow-x:hidden;min-height:100vh;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg,#050f1a,#0a1e30);border:1px solid var(--border2);border-radius:8px;margin-bottom:9px;box-shadow:var(--glow);}
+.logo{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,#00e5ff,#00ff9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,229,255,.4);letter-spacing:3px;margin-top:2px;}
+.hdr-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.pill{font-family:'Share Tech Mono',monospace;font-size:9px;padding:4px 9px;border-radius:20px;letter-spacing:1px;}
+.pill-live{background:rgba(0,255,157,.08);border:1px solid var(--green);color:var(--green);animation:plive 2s ease-in-out infinite;}
+@keyframes plive{0%,100%{box-shadow:0 0 4px rgba(0,255,157,.2)}50%{box-shadow:0 0 12px rgba(0,255,157,.6)}}
+.pill-asx{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.35);color:var(--gold);}
+.clk{font-family:'Orbitron',monospace;font-size:13px;color:var(--accent);letter-spacing:2px;}
+.btn{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;padding:7px 12px;border-radius:5px;cursor:pointer;transition:all .25s;border:1px solid;}
+.btn-ref{background:rgba(255,215,0,.08);border-color:rgba(255,215,0,.35);color:var(--gold);}
+.btn-ref:hover{background:rgba(255,215,0,.15);box-shadow:var(--glow-gold);}
+.btn-ref:disabled{opacity:.4;cursor:not-allowed;}
+.btn-ai{background:rgba(0,229,255,.08);border-color:var(--accent);color:var(--accent);}
+.btn-ai:hover{background:rgba(0,229,255,.18);box-shadow:var(--glow);}
 
-  body::before{
-    content:'';position:fixed;inset:0;
-    background-image:linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);
-    background-size:40px 40px;pointer-events:none;z-index:0;
-  }
+.ticker-bar{background:linear-gradient(90deg,rgba(255,107,53,.06),rgba(255,204,0,.08),rgba(255,107,53,.06));border:1px solid rgba(255,204,0,.22);border-radius:6px;padding:6px 12px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--yellow);margin-bottom:9px;overflow:hidden;white-space:nowrap;}
+.ticker-inner{display:inline-block;animation:tkr 70s linear infinite;padding-left:100%;}
+@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 
-  .scan-line{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,229,255,0.6),transparent);animation:scan 6s linear infinite;z-index:1;pointer-events:none;}
-  @keyframes scan{0%{top:0;opacity:1;}90%{opacity:.8;}100%{top:100vh;opacity:0;}}
+.sbar{display:flex;align-items:center;gap:14px;padding:6px 12px;background:rgba(0,0,0,.28);border:1px solid var(--border);border-radius:5px;margin-bottom:9px;font-family:'Share Tech Mono',monospace;font-size:9px;flex-wrap:wrap;}
+.ok{color:var(--green);}
+.warn{color:var(--yellow);}
+.err{color:var(--red);}
+.lbl{color:#445;margin-right:3px;}
 
-  #app{position:relative;z-index:2;padding:12px;}
+.pnl{background:linear-gradient(135deg,var(--panel),var(--bg3));border:1px solid var(--border);border-radius:8px;padding:12px;position:relative;overflow:hidden;}
+.pnl::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.45;}
+.pnl.pg::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.pnl.pgr::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.pnl.pr::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.pnl.pp::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.pt{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:var(--accent);margin-bottom:9px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.pt.g{color:var(--gold);}
+.pt.gr{color:var(--green);}
+.pt.r{color:var(--red);}
+.pt.p{color:var(--purple);}
+.badge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:7px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;font-weight:700;margin-left:2px;}
+.bai{background:rgba(180,79,255,.18);color:var(--purple);border:1px solid rgba(180,79,255,.3);}
+.blive{background:rgba(0,255,157,.12);color:var(--green);border:1px solid rgba(0,255,157,.3);}
+.basx{background:rgba(255,215,0,.12);color:var(--gold);border:1px solid rgba(255,215,0,.25);}
 
-  /* HEADER */
-  .header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(135deg,#050f1a,#0a1e30);border:1px solid var(--border2);border-radius:8px;margin-bottom:10px;box-shadow:var(--glow),inset 0 1px 0 rgba(0,229,255,0.1);}
-  .header-left{display:flex;align-items:center;gap:16px;}
-  .logo{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-  .logo-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,229,255,0.5);letter-spacing:4px;margin-top:2px;}
-  .header-status{display:flex;gap:12px;align-items:center;}
-  .status-pill{font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 10px;border-radius:20px;letter-spacing:1px;}
-  .status-live{background:rgba(0,255,157,0.1);border:1px solid var(--green);color:var(--green);animation:pulse-live 2s ease-in-out infinite;}
-  @keyframes pulse-live{0%,100%{box-shadow:0 0 5px rgba(0,255,157,0.3);}50%{box-shadow:0 0 15px rgba(0,255,157,0.7);}}
-  .status-asx{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);color:var(--gold);}
-  .header-clock{font-family:'Orbitron',monospace;font-size:16px;color:var(--accent);letter-spacing:2px;}
-  .ai-dot-wrap{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);}
-  .ai-dot{width:8px;height:8px;border-radius:50%;background:var(--purple);animation:ai-pulse 1.5s ease-in-out infinite;}
-  @keyframes ai-pulse{0%,100%{opacity:.4;transform:scale(1);}50%{opacity:1;transform:scale(1.4);}}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:9px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.c2{grid-column:span 2;}
+.mb9{margin-bottom:9px;}
 
-  /* TICKER */
-  .alert-banner{background:linear-gradient(90deg,rgba(255,107,53,0.1),rgba(255,204,0,0.1),rgba(255,107,53,0.1));border:1px solid rgba(255,204,0,0.3);border-radius:6px;padding:8px 16px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--yellow);margin-bottom:10px;overflow:hidden;white-space:nowrap;}
-  .ticker-wrap{display:inline-block;animation:ticker 50s linear infinite;padding-left:100%;}
-  @keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-100%);}}
+.pulse-row{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:9px;}
+.pc{background:linear-gradient(135deg,#0a1825,#0d2035);border:1px solid var(--border);border-radius:6px;padding:9px 8px;text-align:center;transition:all .25s;position:relative;cursor:pointer;}
+.pc:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
+.pc.up{border-color:rgba(0,255,157,.28);}
+.pc.dn{border-color:rgba(255,51,102,.28);}
+.pc.hot{border-color:rgba(255,204,0,.35);box-shadow:0 0 10px rgba(255,204,0,.15);}
+.pn{font-family:'Orbitron',monospace;font-size:9px;color:#8ab;letter-spacing:1px;margin-bottom:3px;}
+.pv{font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;color:#e8f4ff;}
+.pp{font-family:'Share Tech Mono',monospace;font-size:11px;margin-top:2px;}
+.ut{color:var(--green);}
+.dt{color:var(--red);}
+.nt{color:#778;}
 
-  /* PULSE ROW */
-  .pulse-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px;}
-  .pulse-card{background:linear-gradient(135deg,#0a1825,#0d2035);border:1px solid var(--border);border-radius:6px;padding:10px 12px;text-align:center;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;}
-  .pulse-card:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
-  .pulse-card.up{border-color:rgba(0,255,157,0.3);}
-  .pulse-card.down{border-color:rgba(255,51,102,0.3);}
-  .pulse-card.hot{border-color:rgba(255,204,0,0.4);box-shadow:0 0 15px rgba(255,204,0,0.2);}
-  .pulse-name{font-family:'Orbitron',monospace;font-size:10px;color:#8ab;letter-spacing:1px;margin-bottom:3px;}
-  .pulse-val{font-family:'Share Tech Mono',monospace;font-size:17px;font-weight:700;color:#e8f4ff;}
-  .pulse-chg{font-family:'Share Tech Mono',monospace;font-size:12px;margin-top:3px;}
-  .pulse-heat{position:absolute;top:4px;right:6px;font-size:13px;}
-  .up-text{color:var(--green);}
-  .down-text{color:var(--red);}
+.hmap{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;}
+.hc{border-radius:4px;padding:8px 3px;text-align:center;cursor:pointer;transition:transform .2s;font-family:'Share Tech Mono',monospace;}
+.hc:hover{transform:scale(1.1);z-index:10;position:relative;}
+.ht{font-size:8px;font-weight:700;letter-spacing:.5px;}
+.hp{font-size:11px;font-weight:700;margin-top:2px;}
+.hsubp{font-size:8px;opacity:.7;margin-top:1px;}
+.hfire{background:linear-gradient(135deg,#ff6b35,#ff3d00);color:#fff;box-shadow:0 0 10px rgba(255,107,53,.45);}
+.hhot{background:linear-gradient(135deg,#ff9500,#ff6500);color:#fff;box-shadow:0 0 7px rgba(255,149,0,.35);}
+.hwarm{background:linear-gradient(135deg,#ffd700,#ffb300);color:#000;}
+.hcool{background:linear-gradient(135deg,#1a3a2a,#0d2818);color:#6dffb3;border:1px solid rgba(0,255,100,.18);}
+.hcold{background:linear-gradient(135deg,#1a1a3a,#0d0d28);color:#6db3ff;border:1px solid rgba(50,100,255,.18);}
+.hfrz{background:linear-gradient(135deg,#2a0a1a,#1a0510);color:#ff6b9d;border:1px solid rgba(255,51,102,.28);}
+.hneu{background:linear-gradient(135deg,#1a2030,#0f1520);color:#778;border:1px solid rgba(100,120,150,.15);}
 
-  /* PANELS */
-  .panel{background:linear-gradient(135deg,var(--panel),var(--bg3));border:1px solid var(--border);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
-  .panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.6;}
-  .panel-gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
-  .panel-green::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
-  .panel-red::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
-  .panel-purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.sf{display:flex;flex-direction:column;gap:5px;}
+.sr{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:9px;}
+.sn{width:90px;color:#778;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.st{flex:1;height:14px;background:rgba(255,255,255,.03);border-radius:3px;overflow:hidden;}
+.sfill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:5px;font-size:8px;transition:width .8s ease;}
+.sfill.up{background:linear-gradient(90deg,rgba(0,255,157,.22),rgba(0,255,157,.05));color:var(--green);}
+.sfill.dn{background:linear-gradient(90deg,rgba(255,51,102,.22),rgba(255,51,102,.05));color:var(--red);}
+.sv{width:46px;text-align:right;font-family:'Share Tech Mono',monospace;font-size:9px;}
+.sv.up{color:var(--green);}
+.sv.dn{color:var(--red);}
 
-  .panel-title{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px;text-transform:uppercase;}
-  .panel-title.gold{color:var(--gold);}
-  .panel-title.green{color:var(--green);}
-  .panel-title.red{color:var(--red);}
-  .panel-title.purple{color:var(--purple);}
+.sigl{display:flex;flex-direction:column;gap:5px;}
+.sigi{display:flex;align-items:center;gap:5px;padding:6px 8px;background:rgba(0,0,0,.28);border-radius:5px;border-left:3px solid transparent;font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;transition:all .2s;}
+.sigi:hover{background:rgba(0,229,255,.04);transform:translateX(2px);}
+.sigi.sb{border-left-color:var(--green);}
+.sigi.ss{border-left-color:var(--red);}
+.sigi.sh{border-left-color:var(--yellow);}
+.stk{color:#e8f4ff;font-weight:700;width:58px;flex-shrink:0;}
+.sreason{color:#445;flex:1;font-size:8px;}
+.sconf{font-size:9px;color:rgba(0,229,255,.4);flex-shrink:0;}
+.sact{padding:2px 6px;border-radius:3px;font-size:8px;letter-spacing:1px;font-weight:700;flex-shrink:0;}
+.abuy{background:rgba(0,255,157,.12);color:var(--green);border:1px solid rgba(0,255,157,.28);}
+.asell{background:rgba(255,51,102,.12);color:var(--red);border:1px solid rgba(255,51,102,.28);}
+.ahold{background:rgba(255,204,0,.12);color:var(--yellow);border:1px solid rgba(255,204,0,.28);}
 
-  /* BADGE */
-  .badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;font-weight:700;vertical-align:middle;margin-left:4px;}
-  .badge-ai{background:rgba(180,79,255,0.2);color:var(--purple);border:1px solid rgba(180,79,255,0.3);}
-  .badge-hot{background:rgba(255,107,53,0.2);color:#ff8a65;border:1px solid rgba(255,107,53,0.3);}
-  .badge-asx{background:rgba(255,215,0,0.15);color:var(--gold);border:1px solid rgba(255,215,0,0.3);}
+.pml{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;}
+.pmr{display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(0,0,0,.22);border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:9px;border-left:2px solid var(--border);transition:all .18s;cursor:pointer;}
+.pmr:hover{background:rgba(0,229,255,.04);}
+.pmr.bull{border-left-color:var(--green);}
+.pmr.bear{border-left-color:var(--red);}
+.pmtk{color:#dde;font-weight:700;width:52px;flex-shrink:0;}
+.pmcat{color:#445;flex:1;}
+.pmmv{font-size:12px;width:52px;text-align:right;flex-shrink:0;}
 
-  /* MAIN GRID */
-  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-  .grid-full{grid-column:1/-1;}
-  .col-span-2{grid-column:span 2;}
+.fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.fb{background:rgba(0,0,0,.38);border:1px solid rgba(0,229,255,.1);border-radius:5px;padding:9px 10px;}
+.fl{font-size:8px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;opacity:.65;}
+.fm{font-family:'Share Tech Mono',monospace;font-size:10px;color:#c0ddf5;line-height:1.7;}
+.fv{color:var(--gold);}
+.fo{color:var(--purple);}
+.fr{color:var(--green);font-size:11px;font-weight:700;}
 
-  /* HEATMAP */
-  .heatmap-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;}
-  .heat-cell{border-radius:4px;padding:8px 4px;text-align:center;cursor:pointer;transition:transform 0.2s;font-family:'Share Tech Mono',monospace;position:relative;}
-  .heat-cell:hover{transform:scale(1.1);z-index:10;}
-  .heat-cell .hticker{font-size:9px;font-weight:700;letter-spacing:1px;}
-  .heat-cell .hpct{font-size:11px;font-weight:700;margin-top:2px;}
-  .heat-cell .hvol{font-size:8px;opacity:.7;margin-top:1px;}
-  .heat-fire{background:linear-gradient(135deg,#ff6b35,#ff3d00);color:#fff;box-shadow:0 0 12px rgba(255,107,53,.5);}
-  .heat-hot{background:linear-gradient(135deg,#ff9500,#ff6b00);color:#fff;box-shadow:0 0 8px rgba(255,149,0,.4);}
-  .heat-warm{background:linear-gradient(135deg,#ffd700,#ffb300);color:#000;}
-  .heat-cool{background:linear-gradient(135deg,#1a3a2a,#0d2818);color:#6dffb3;border:1px solid rgba(0,255,100,.2);}
-  .heat-cold{background:linear-gradient(135deg,#1a1a3a,#0d0d28);color:#6db3ff;border:1px solid rgba(50,100,255,.2);}
-  .heat-freeze{background:linear-gradient(135deg,#2a0a1a,#1a0510);color:#ff6b9d;border:1px solid rgba(255,51,102,.3);box-shadow:0 0 8px rgba(255,51,102,.2);}
-  .heat-neutral{background:linear-gradient(135deg,#1a2030,#0f1520);color:#889;border:1px solid rgba(100,120,150,.2);}
+.pgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
+.pkc{background:linear-gradient(135deg,#0a1825,#0d2035);border:1px solid var(--border);border-radius:6px;padding:9px;cursor:pointer;transition:all .25s;position:relative;}
+.pkc:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
+.pkc.top{border-color:rgba(255,215,0,.45);background:linear-gradient(135deg,#181200,#1a1100);}
+.pkrank{position:absolute;top:6px;right:7px;font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,215,0,.4);}
+.pktk{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#e8f4ff;margin-bottom:1px;}
+.pktk.gld{color:var(--gold);}
+.pknm{font-size:9px;color:#3a5070;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pkbars{margin:4px 0;display:flex;flex-direction:column;gap:2px;}
+.pbr{display:flex;align-items:center;gap:4px;font-size:8px;color:#556;font-family:'Share Tech Mono',monospace;}
+.pbt{flex:1;height:3px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;}
+.pbf{height:100%;border-radius:2px;transition:width 1s ease;}
+.bmom{background:linear-gradient(90deg,var(--accent),#0080ff);}
+.bvol{background:linear-gradient(90deg,var(--gold),#ff9500);}
+.bsig{background:linear-gradient(90deg,var(--green),#00b0ff);}
+.pkmet{display:flex;justify-content:space-between;align-items:flex-end;margin-top:4px;}
+.pkpr{font-family:'Share Tech Mono',monospace;font-size:12px;color:#c8d8e8;}
+.pkich{font-family:'Share Tech Mono',monospace;font-size:11px;}
+.pkico{display:flex;gap:2px;margin-top:3px;}
+.ldot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin-left:4px;animation:plive 1.5s ease-in-out infinite;vertical-align:middle;}
 
-  /* SECTOR */
-  .sector-flows{display:flex;flex-direction:column;gap:5px;}
-  .sector-row{display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;font-size:10px;}
-  .sector-name{width:90px;color:#889;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;}
-  .sector-track{flex:1;height:16px;background:rgba(255,255,255,.03);border-radius:3px;overflow:hidden;}
-  .sector-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:6px;font-size:9px;transition:width 1s ease;}
-  .sector-fill.up{background:linear-gradient(90deg,rgba(0,255,157,.25),rgba(0,255,157,.1));color:var(--green);}
-  .sector-fill.down{background:linear-gradient(90deg,rgba(255,51,102,.25),rgba(255,51,102,.1));color:var(--red);}
-  .sector-val{width:50px;text-align:right;}
-  .sector-val.up{color:var(--green);}
-  .sector-val.down{color:var(--red);}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:9px;}
+.mc{background:linear-gradient(135deg,#120e00,#1a1400);border:1px solid rgba(255,215,0,.2);border-radius:6px;padding:11px;text-align:center;cursor:pointer;transition:all .25s;}
+.mc:hover{border-color:var(--gold);box-shadow:var(--glow-gold);transform:translateY(-2px);}
+.msym{font-size:22px;margin-bottom:3px;}
+.mnm{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:3px;}
+.mpr{font-family:'Share Tech Mono',monospace;font-size:15px;color:#e8d88f;margin:3px 0;}
+.musd{font-family:'Share Tech Mono',monospace;font-size:9px;color:#7755aa;margin-bottom:2px;}
+.mch{font-family:'Share Tech Mono',monospace;font-size:11px;}
+.mbar{margin-top:6px;height:3px;background:rgba(255,215,0,.08);border-radius:2px;overflow:hidden;}
+.mbf{height:100%;background:linear-gradient(90deg,var(--gold),#ffaa00);border-radius:2px;transition:width .8s ease;}
 
-  /* SIGNALS */
-  .signal-list{display:flex;flex-direction:column;gap:6px;}
-  .signal-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:rgba(0,0,0,.3);border-radius:5px;border-left:3px solid transparent;font-family:'Share Tech Mono',monospace;font-size:11px;transition:all .2s;cursor:pointer;}
-  .signal-item:hover{background:rgba(0,229,255,.05);transform:translateX(3px);}
-  .signal-buy{border-left-color:var(--green);}
-  .signal-sell{border-left-color:var(--red);}
-  .signal-hold{border-left-color:var(--yellow);}
-  .signal-watch{border-left-color:var(--purple);}
-  .sig-ticker{color:#e8f4ff;font-weight:700;width:55px;}
-  .sig-action{padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:1px;font-weight:700;}
-  .act-buy{background:rgba(0,255,157,.15);color:var(--green);border:1px solid rgba(0,255,157,.3);}
-  .act-sell{background:rgba(255,51,102,.15);color:var(--red);border:1px solid rgba(255,51,102,.3);}
-  .act-hold{background:rgba(255,204,0,.15);color:var(--yellow);border:1px solid rgba(255,204,0,.3);}
-  .act-watch{background:rgba(180,79,255,.15);color:var(--purple);border:1px solid rgba(180,79,255,.3);}
+.aimets{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px;}
+.aim{background:rgba(0,0,0,.28);border:1px solid rgba(180,79,255,.18);border-radius:5px;padding:7px;text-align:center;}
+.aimv{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:var(--purple);}
+.aiml{font-size:8px;color:#445;letter-spacing:1px;margin-top:2px;text-transform:uppercase;}
+.ailog{background:rgba(0,0,0,.45);border:1px solid rgba(180,79,255,.12);border-radius:5px;padding:7px;font-family:'Share Tech Mono',monospace;font-size:9px;line-height:1.9;max-height:130px;overflow-y:auto;}
+.ll{display:flex;gap:7px;}
+.lt{color:rgba(180,79,255,.4);min-width:50px;flex-shrink:0;}
+.lm{color:#8899aa;}
+.lm.hot{color:var(--green);}
+.lm.warn{color:var(--yellow);}
+.lm.err{color:var(--red);}
 
-  /* PRE-MARKET */
-  .premarket-list{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
-  .pm-row{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:rgba(0,0,0,.25);border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:11px;border-left:2px solid var(--border);transition:all .2s;cursor:pointer;}
-  .pm-row:hover{background:rgba(0,229,255,.05);border-left-color:var(--accent);}
-  .pm-row.bullish{border-left-color:var(--green);}
-  .pm-row.bearish{border-left-color:var(--red);}
-  .pm-ticker{color:#dde;font-weight:700;width:55px;}
-  .pm-catalyst{color:#556;font-size:9px;flex:1;padding:0 8px;}
-  .pm-move{font-size:13px;width:55px;text-align:right;}
-
-  /* FORMULAS */
-  .formula-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-  .formula-box{background:rgba(0,0,0,.4);border:1px solid rgba(0,229,255,.15);border-radius:5px;padding:10px 12px;}
-  .formula-label{font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;opacity:.7;}
-  .formula-math{font-family:'Share Tech Mono',monospace;font-size:10px;color:#c8e8ff;line-height:1.7;}
-  .formula-var{color:var(--gold);}
-  .formula-op{color:var(--purple);}
-  .formula-result{color:var(--green);font-size:12px;font-weight:700;}
-
-  /* PICKS */
-  .picks-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
-  .pick-card{background:linear-gradient(135deg,#0a1825,#0d2035);border:1px solid var(--border);border-radius:6px;padding:10px;cursor:pointer;transition:all .3s;position:relative;}
-  .pick-card:hover{border-color:var(--accent);box-shadow:var(--glow);transform:translateY(-2px);}
-  .pick-card.top-pick{border-color:rgba(255,215,0,.5);background:linear-gradient(135deg,#1a1500,#1a1000);}
-  .pick-rank{position:absolute;top:7px;right:7px;font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,215,0,.5);}
-  .pick-ticker{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:#e8f4ff;margin-bottom:2px;}
-  .pick-ticker.gold{color:var(--gold);}
-  .pick-name{font-size:9px;color:#4466aa;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .pick-metrics{display:flex;justify-content:space-between;align-items:flex-end;margin-top:5px;}
-  .pick-price{font-family:'Share Tech Mono',monospace;font-size:13px;color:#c8d8e8;}
-  .pick-chg{font-family:'Share Tech Mono',monospace;font-size:12px;}
-  .pick-bars{margin:5px 0;display:flex;flex-direction:column;gap:3px;}
-  .pick-bar-row{display:flex;align-items:center;gap:4px;font-size:9px;color:#667;font-family:'Share Tech Mono',monospace;}
-  .pick-bar-track{flex:1;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
-  .pick-bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
-  .bar-mom{background:linear-gradient(90deg,var(--accent),#0088ff);}
-  .bar-vol{background:linear-gradient(90deg,var(--gold),#ff9500);}
-  .bar-sig{background:linear-gradient(90deg,var(--green),#00bbff);}
-  .pick-icons{display:flex;gap:3px;margin-top:4px;}
-
-  /* METALS */
-  .metals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
-  .metal-card{background:linear-gradient(135deg,#120e00,#1a1400);border:1px solid rgba(255,215,0,.25);border-radius:6px;padding:12px;text-align:center;cursor:pointer;transition:all .3s;}
-  .metal-card:hover{border-color:var(--gold);box-shadow:var(--glow-gold);transform:translateY(-2px);}
-  .metal-symbol{font-size:22px;margin-bottom:4px;}
-  .metal-name{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:2px;}
-  .metal-price{font-family:'Share Tech Mono',monospace;font-size:15px;color:#e8d88f;margin:4px 0;}
-  .metal-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:#8870aa;margin-bottom:2px;}
-  .metal-chg{font-family:'Share Tech Mono',monospace;font-size:12px;}
-  .metal-bar{margin-top:8px;height:3px;background:rgba(255,215,0,.1);border-radius:2px;overflow:hidden;}
-  .metal-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),#ffaa00);border-radius:2px;}
-
-  /* AI PANEL */
-  .ai-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
-  .ai-metric{background:rgba(0,0,0,.3);border:1px solid rgba(180,79,255,.2);border-radius:5px;padding:8px;text-align:center;}
-  .ai-metric-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--purple);}
-  .ai-metric-label{font-size:9px;color:#556;letter-spacing:1px;margin-top:2px;text-transform:uppercase;}
-  .ai-log{background:rgba(0,0,0,.5);border:1px solid rgba(180,79,255,.15);border-radius:5px;padding:8px;font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.8;max-height:120px;overflow-y:auto;}
-  .log-line{display:flex;gap:8px;}
-  .log-time{color:rgba(180,79,255,.5);min-width:55px;}
-  .log-msg{color:#8899aa;}
-  .log-msg.hot{color:var(--green);}
-  .log-msg.warn{color:var(--yellow);}
-  .log-msg.alert{color:var(--red);}
-
-  /* STAT ROW */
-  .stat-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Share Tech Mono',monospace;font-size:10px;}
-  .stat-row .label{color:#556;}
-  .stat-row .value{color:#c8d8e8;}
-  .stat-row .value.good{color:var(--green);}
-  .stat-row .value.bad{color:var(--red);}
-
-  /* REFRESH BTN */
-  .refresh-btn{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;padding:8px 16px;background:linear-gradient(135deg,rgba(0,229,255,.1),rgba(0,255,157,.1));border:1px solid var(--accent);border-radius:5px;color:var(--accent);cursor:pointer;transition:all .3s;}
-  .refresh-btn:hover{background:rgba(0,229,255,.2);box-shadow:var(--glow);transform:translateY(-1px);}
-
-  /* LOADING */
-  .loading-overlay{position:fixed;inset:0;background:rgba(2,4,8,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .8s ease;}
-  .loading-overlay.hidden{opacity:0;pointer-events:none;}
-  .loading-logo{font-family:'Orbitron',monospace;font-size:36px;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;animation:glow-pulse 2s ease-in-out infinite;}
-  @keyframes glow-pulse{0%,100%{filter:drop-shadow(0 0 20px rgba(0,229,255,.5));}50%{filter:drop-shadow(0 0 40px rgba(0,229,255,.9));}}
-  .loading-bar{width:300px;height:3px;background:rgba(0,229,255,.1);border-radius:2px;overflow:hidden;margin:16px 0;}
-  .loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;animation:loading-progress 2.5s ease-in-out forwards;}
-  @keyframes loading-progress{0%{width:0;}100%{width:100%;}}
-
-  ::-webkit-scrollbar{width:4px;}
-  ::-webkit-scrollbar-track{background:rgba(0,0,0,.2);}
-  ::-webkit-scrollbar-thumb{background:rgba(0,229,255,.3);border-radius:2px;}
-
-  canvas{display:block;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,.15);}
+::-webkit-scrollbar-thumb{background:rgba(0,229,255,.25);border-radius:2px;}
+canvas{display:block;}
 </style>
 </head>
 <body>
-
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-logo">APEX ASX</div>
-  <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,229,255,0.4);letter-spacing:4px;margin-bottom:8px;">AUSTRALIAN MARKET INTELLIGENCE</div>
-  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
-  <div id="loadingStatus" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,229,255,0.5);letter-spacing:2px;">INITIALIZING ASX DATA FEEDS...</div>
+<div class="load-overlay" id="lo">
+  <div class="load-logo">APEX ASX</div>
+  <div class="load-sub">LIVE MARKET INTELLIGENCE</div>
+  <div class="load-bar"><div class="load-fill" id="lf"></div></div>
+  <div class="load-status" id="ls">CONNECTING TO TWELVE DATA...</div>
 </div>
-
-<div class="scan-line"></div>
+<div class="scan"></div>
 <div id="app">
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-left">
-    <div>
-      <div class="logo">APEX ASX</div>
-      <div class="logo-sub">AUSTRALIAN MARKET INTELLIGENCE v4.2</div>
-    </div>
-    <div class="ai-dot-wrap"><div class="ai-dot"></div>AI ENGINE ACTIVE</div>
+<div class="hdr">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div><div class="logo">APEX ASX</div><div class="logo-sub">LIVE — TWELVE DATA FEED</div></div>
   </div>
-  <div class="header-status">
-    <div class="status-pill status-asx">🦘 ASX FOCUS</div>
-    <div class="status-pill status-live">⬤ LIVE</div>
-    <div class="header-clock" id="clock">--:--:--</div>
-    <button class="refresh-btn" onclick="runAIAnalysis()">⚡ AI ANALYSIS</button>
+  <div class="hdr-right">
+    <div class="pill pill-asx">🦘 ASX</div>
+    <div class="pill pill-live">⬤ LIVE</div>
+    <div class="clk" id="clk">--:--:-- AEST</div>
+    <button class="btn btn-ref" id="refBtn" onclick="manualRefresh()">🔄 REFRESH</button>
+    <button class="btn btn-ai" onclick="runAI()">⚡ AI ANALYSIS</button>
   </div>
 </div>
 
-<!-- TICKER -->
-<div class="alert-banner">
-  <div class="ticker-wrap">
-    ⚡ ASX 200: 7,842 +0.74% &nbsp;|&nbsp; XJO +0.74% &nbsp;|&nbsp; BHP.AX $45.82 +1.4% &nbsp;|&nbsp; RIO.AX $128.40 +1.1% &nbsp;|&nbsp; NCM.AX $26.80 +2.1% &nbsp;|&nbsp; GOLD AUD $3,568/oz +0.62% &nbsp;|&nbsp; SILVER AUD $45.12/oz +1.1% &nbsp;|&nbsp; AUD/USD 0.6520 &nbsp;|&nbsp; RBA RATE 4.35% HOLD &nbsp;|&nbsp; IRON ORE $109.4 &nbsp;|&nbsp; LITHIUM $14,200/t &nbsp;|&nbsp; COAL $135/t &nbsp;|&nbsp; CBA.AX $126.40 +0.3% &nbsp;|&nbsp; WES.AX $74.20 +0.5% &nbsp;|&nbsp; AI SIGNAL: MATERIALS + GOLD MINERS SHOWING STRONG INSTITUTIONAL FLOW &nbsp;|&nbsp;
-  </div>
+<div class="sbar">
+  <span><span class="lbl">SOURCE:</span><span id="s-src" class="warn">CONNECTING...</span></span>
+  <span><span class="lbl">GOLD AUD:</span><span id="s-gold" class="warn">--</span></span>
+  <span><span class="lbl">SILVER AUD:</span><span id="s-silver" class="warn">--</span></span>
+  <span><span class="lbl">AUD/USD:</span><span id="s-fx" class="warn">--</span></span>
+  <span><span class="lbl">STOCKS:</span><span id="s-stocks" class="warn">--</span></span>
+  <span><span class="lbl">FETCHED:</span><span id="s-time" class="warn">--</span></span>
+  <span><span class="lbl">NEXT:</span><span id="s-next" class="warn">--</span></span>
 </div>
 
-<!-- PULSE ROW -->
+<div class="ticker-bar"><div class="ticker-inner" id="tickerInner">⚡ CONNECTING TO TWELVE DATA LIVE FEED...</div></div>
+
 <div class="pulse-row">
-  <div class="pulse-card up hot">
-    <div class="pulse-heat">🔥</div>
-    <div class="pulse-name">ASX 200</div>
-    <div class="pulse-val">7,842</div>
-    <div class="pulse-chg up-text">▲ +0.74%</div>
-  </div>
-  <div class="pulse-card up hot">
-    <div class="pulse-heat">⚡</div>
-    <div class="pulse-name">ALL ORDS</div>
-    <div class="pulse-val">8,068</div>
-    <div class="pulse-chg up-text">▲ +0.81%</div>
-  </div>
-  <div class="pulse-card up">
-    <div class="pulse-name">ASX MATS</div>
-    <div class="pulse-val">14,210</div>
-    <div class="pulse-chg up-text">▲ +1.42%</div>
-  </div>
-  <div class="pulse-card up">
-    <div class="pulse-name">ASX GOLD</div>
-    <div class="pulse-val">8,940</div>
-    <div class="pulse-chg up-text">▲ +2.14%</div>
-  </div>
-  <div class="pulse-card up">
-    <div class="pulse-name">AUD/USD</div>
-    <div class="pulse-val">0.6520</div>
-    <div class="pulse-chg up-text">▲ +0.28%</div>
-  </div>
-  <div class="pulse-card down">
-    <div class="pulse-name">ASX FINS</div>
-    <div class="pulse-val">7,318</div>
-    <div class="pulse-chg down-text">▼ -0.32%</div>
+  <div class="pc hot" id="pc-gold"><div class="pn">GOLD AUD/oz</div><div class="pv" id="pv-gold">--</div><div class="pp" id="pp-gold">--</div></div>
+  <div class="pc hot" id="pc-silver"><div class="pn">SILVER AUD/oz</div><div class="pv" id="pv-silver">--</div><div class="pp" id="pp-silver">--</div></div>
+  <div class="pc" id="pc-fx"><div class="pn">AUD/USD</div><div class="pv" id="pv-fx">--</div><div class="pp" id="pp-fx">--</div></div>
+  <div class="pc" id="pc-xjo"><div class="pn">ASX 200</div><div class="pv" id="pv-xjo">--</div><div class="pp" id="pp-xjo">--</div></div>
+  <div class="pc" id="pc-aord"><div class="pn">ALL ORDS</div><div class="pv" id="pv-aord">--</div><div class="pp" id="pp-aord">--</div></div>
+  <div class="pc" id="pc-xgd"><div class="pn">ASX GOLD IDX</div><div class="pv" id="pv-xgd">--</div><div class="pp" id="pp-xgd">--</div></div>
+</div>
+
+<div class="pnl mb9">
+  <div class="pt">🌋 <span>ASX MONEY MOVEMENT HEATMAP — LIVE</span><span class="badge bai">AI</span><span class="badge blive">TWELVE DATA</span></div>
+  <div class="hmap" id="hmap"></div>
+</div>
+
+<div class="g3">
+  <div class="pnl pgr"><div class="pt gr">📊 <span>ASX SECTOR FLOW</span></div><div class="sf" id="sf"></div></div>
+  <div class="pnl"><div class="pt">🎯 <span>AI SIGNALS</span><span class="badge bai">NEURAL NET</span></div><div class="sigl" id="sigl"></div></div>
+  <div class="pnl pr"><div class="pt r">⚡ <span>TOP MOVERS</span></div><div class="pml" id="pml"></div></div>
+</div>
+
+<div class="pnl mb9">
+  <div class="pt p">🧮 <span>AI FORMULA PIPELINE</span><span class="badge bai">ASX CALIBRATED</span></div>
+  <div class="fgrid">
+    <div class="fb"><div class="fl">MOMENTUM Z-SCORE</div><div class="fm"><span class="fv">Z</span><span class="fo"> = </span>(<span class="fv">P_t − μ₂₀</span>)<span class="fo"> / </span><span class="fv">σ₂₀</span><br>ASX: 10:00–16:00 AEST<br>Twelve Data feed 60s<br><span class="fr">→ Z &gt; 2.0 = BREAKOUT</span></div></div>
+    <div class="fb"><div class="fl">GOLD AUD LIVE</div><div class="fm"><span class="fv">Au_AUD</span><span class="fo"> = </span><span class="fv">XAU/USD</span><span class="fo"> / </span><span class="fv">AUD/USD</span><br><span class="fv">Ag_AUD</span><span class="fo"> = </span><span class="fv">XAG/USD</span><span class="fo"> / </span><span class="fv">AUD/USD</span><br>Both fetched from TD API<br><span class="fr">→ AUD↓ = miners ↑↑</span></div></div>
+    <div class="fb"><div class="fl">AI COMPOSITE (ACS)</div><div class="fm"><span class="fv">ACS</span><span class="fo"> = </span>0.30<span class="fv">Z</span><span class="fo"> + </span>0.25<span class="fv">RSI</span><span class="fo"> + </span>0.20<span class="fv">CMF</span><br><span class="fo">+ </span>0.15<span class="fv">OBV_Δ</span><span class="fo"> + </span>0.10<span class="fv">ATR%</span><br>+ <span class="fv">commodity_β</span><br><span class="fr">→ ACS &gt; 0.72 = BUY</span></div></div>
+    <div class="fb"><div class="fl">IRON ORE BETA</div><div class="fm">Fe ↑5% → BHP β≈0.78<br>→ BHP expected +3.9%<br><span class="fv">β</span><span class="fo"> = </span>Cov(<span class="fv">r_BHP,r_Fe</span>)<span class="fo">/</span>σ²<br><span class="fr">→ Fe MOVE = SIGNAL</span></div></div>
+    <div class="fb"><div class="fl">VOLUME ANOMALY</div><div class="fm"><span class="fv">V_ratio</span><span class="fo"> = </span><span class="fv">V_t / V̄₂₀</span><br><span class="fv">OBV</span> += ±<span class="fv">V_t</span>×sign(<span class="fv">ΔP</span>)<br><span class="fv">CMF</span><span class="fo"> = </span>Σ(MFV)/Σ(V,20)<br><span class="fr">→ V_ratio &gt; 3× = SURGE</span></div></div>
+    <div class="fb"><div class="fl">MACD SIGNAL</div><div class="fm"><span class="fv">MACD</span><span class="fo"> = </span>EMA(12)<span class="fo"> − </span>EMA(26)<br><span class="fv">Signal</span><span class="fo"> = </span>EMA(MACD,9)<br><span class="fv">Hist</span><span class="fo"> = </span>MACD<span class="fo"> − </span>Signal<br><span class="fr">→ Crossover = ENTRY</span></div></div>
+    <div class="fb"><div class="fl">KELLY SIZING</div><div class="fm"><span class="fv">K%</span><span class="fo"> = </span>P<span class="fo"> − </span>(1<span class="fo">−</span>P)<span class="fo">/</span>b<br><span class="fv">EV</span><span class="fo"> = </span>(P_win×R:R)<span class="fo">−</span>(1<span class="fo">−</span>P)<br>Size<span class="fo"> = </span>K × Capital × 0.25<br><span class="fr">→ EV &gt; 0 = EDGE EXISTS</span></div></div>
+    <div class="fb"><div class="fl">SMART MONEY ASX</div><div class="fm">SMI<span class="fo"> = </span>Close<span class="fo">−</span>Open (30min)<br>Chi-X off-exch ratio<br>Block trades &gt; A$500k<br><span class="fr">→ Block &gt;40% = INST IN</span></div></div>
   </div>
 </div>
 
-<!-- HEATMAP FULL WIDTH -->
-<div class="panel" style="margin-bottom:10px;">
-  <div class="panel-title">🌋 <span>ASX MONEY MOVEMENT HEATMAP — REAL-TIME</span> <span class="badge badge-ai">AI RANKED</span> <span class="badge badge-asx">ASX</span></div>
-  <div class="heatmap-grid" id="heatmapGrid"></div>
+<div class="pnl mb9">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div class="pt" style="margin:0;">🏆 <span>AI TOP 15 ASX PICKS — LIVE PRICES</span><span class="badge bai">NEURAL NET</span><span class="badge blive">LIVE</span></div>
+    <div id="lu" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#334;">FETCHING...</div>
+  </div>
+  <div class="pgrid" id="pgrid"></div>
 </div>
 
-<!-- 3 COL -->
-<div class="grid-3" style="margin-bottom:10px;">
-  <div class="panel panel-green">
-    <div class="panel-title green">📊 <span>ASX SECTOR FLOW</span></div>
-    <div class="sector-flows" id="sectorFlows"></div>
-  </div>
-  <div class="panel">
-    <div class="panel-title">🎯 <span>AI TRADE SIGNALS</span> <span class="badge badge-ai">LIVE</span></div>
-    <div class="signal-list" id="signalList"></div>
-  </div>
-  <div class="panel panel-red">
-    <div class="panel-title red">⚡ <span>PRE-MARKET CATALYSTS</span></div>
-    <div class="premarket-list" id="premarketList"></div>
-  </div>
-</div>
-
-<!-- FORMULAS FULL WIDTH -->
-<div class="panel" style="margin-bottom:10px;">
-  <div class="panel-title purple">🧮 <span>AI DATA PIPELINE — FORMULA ENGINE</span></div>
-  <div class="formula-grid">
-    <div class="formula-box">
-      <div class="formula-label">MOMENTUM Z-SCORE</div>
-      <div class="formula-math">
-        <span class="formula-var">Z</span> <span class="formula-op">=</span> (<span class="formula-var">P_t</span> <span class="formula-op">−</span> <span class="formula-var">μ₂₀</span>) <span class="formula-op">/</span> <span class="formula-var">σ₂₀</span><br>
-        <span class="formula-var">μ</span> <span class="formula-op">=</span> SMA(<span class="formula-var">P</span>, 20 sessions)<br>
-        ASX session: 10:00–16:00 AEST<br>
-        <span class="formula-result">→ Z &gt; 2.0 = BREAKOUT SIGNAL</span>
-      </div>
-    </div>
-    <div class="formula-box">
-      <div class="formula-label">VOLUME ANOMALY (ASX)</div>
-      <div class="formula-math">
-        <span class="formula-var">V_ratio</span> <span class="formula-op">=</span> <span class="formula-var">V_t</span> <span class="formula-op">/</span> <span class="formula-var">V̄</span><sub>20d</sub><br>
-        <span class="formula-var">OBV</span> += <span class="formula-op">±</span><span class="formula-var">V_t</span> × sign(<span class="formula-var">ΔP</span>)<br>
-        <span class="formula-var">CMF</span> <span class="formula-op">=</span> Σ(<span class="formula-var">MFV</span>) <span class="formula-op">/</span> Σ(<span class="formula-var">V</span>, 20)<br>
-        <span class="formula-result">→ V_ratio &gt; 3× = SURGE EVENT</span>
-      </div>
-    </div>
-    <div class="formula-box">
-      <div class="formula-label">AI COMPOSITE SCORE</div>
-      <div class="formula-math">
-        <span class="formula-var">ACS</span> <span class="formula-op">=</span> 0.30<span class="formula-var">Z</span> <span class="formula-op">+</span> 0.25<span class="formula-var">RSI</span> <span class="formula-op">+</span> 0.20<span class="formula-var">CMF</span><br>
-        <span class="formula-op">+</span> 0.15<span class="formula-var">OBV_Δ</span> <span class="formula-op">+</span> 0.10<span class="formula-var">ATR%</span><br>
-        + <span class="formula-var">Commodity_factor</span> (AUD)<br>
-        <span class="formula-result">→ ACS &gt; 0.72 = STRONG BUY</span>
-      </div>
-    </div>
-    <div class="formula-box">
-      <div class="formula-label">GOLD AUD PRICING</div>
-      <div class="formula-math">
-        <span class="formula-var">Au_AUD</span> <span class="formula-op">=</span> <span class="formula-var">Au_USD</span> <span class="formula-op">/</span> <span class="formula-var">AUD/USD</span><br>
-        <span class="formula-var">Ag_AUD</span> <span class="formula-op">=</span> <span class="formula-var">Ag_USD</span> <span class="formula-op">/</span> <span class="formula-var">AUD/USD</span><br>
-        Miner_val ∝ <span class="formula-var">Au_AUD</span> × <span class="formula-var">Reserve_oz</span><br>
-        <span class="formula-result">→ AUD weak = miners UP</span>
-      </div>
-    </div>
-    <div class="formula-box">
-      <div class="formula-label">SMART MONEY (ASX)</div>
-      <div class="formula-math">
-        <span class="formula-var">SMI</span> <span class="formula-op">=</span> Close <span class="formula-op">−</span> Open (last 30 min)<br>
-        <span class="formula-var">Chi_X</span> = Off-exchange ratio<br>
-        <span class="formula-var">Block_ratio</span> <span class="formula-op">=</span> Block_V <span class="formula-op">/</span> V_total<br>
-        <span class="formula-result">→ Block &gt;40% = INST ENTRY</span>
-      </div>
-    </div>
-    <div class="formula-box">
-      <div class="formula-label">MACD SIGNAL</div>
-      <div class="formula-math">
-        <span class="formula-var">MACD</span> <span class="formula-op">=</span> EMA(12) <span class="formula-op">−</span> EMA(26)<br>
-        <span class="formula-var">Signal</span> <span class="formula-op">=</span> EMA(<span class="formula-var">MACD</span>, 9)<br>
-        <span class="formula-var">Hist</span> <span class="formula-op">=</span> <span class="formula-var">MACD</span> <span class="formula-op">−</span> <span class="formula-var">Signal</span><br>
-        <span class="formula-result">→ Crossover = ENTRY SIGNAL</span>
-      </div>
-    </div>
-    <div class="formula-box">
-      <div class="formula-label">KELLY POSITION SIZE</div>
-      <div class="formula-math">
-        <span class="formula-var">Kelly%</span> <span class="formula-op">=</span> <span class="formula-var">P</span> <span class="formula-op">−</span> (1<span class="formula-op">−</span><span class="formula-var">P</span>) <span class="formula-op">/</span> <span class="formula-var">b</span><br>
-        <span class="formula-var">EV</span> <span class="formula-op">=</span> (<span class="formula-var">P_win</span> × <span class="formula-var">R:R</span>) <span class="formula-op">−</span> (1<span class="formula-op">−</span><span class="formula-var">P</span>)<br>
-        Size <span class="formula-op">=</span> Kelly × Capital × 0.25 (ASX)<br>
-        <span class="formula-result">→ EV &gt; 0 = TRADE HAS EDGE</span>
-      </div>
-    </div>
-    <div class="formula-box">
-      <div class="formula-label">COMMODITY CORRELATION</div>
-      <div class="formula-math">
-        <span class="formula-var">ρ</span>(BHP, Fe) <span class="formula-op">=</span> Cov(r_BHP, r_Fe) <span class="formula-op">/</span> σ²<br>
-        <span class="formula-var">β_miner</span> <span class="formula-op">=</span> <span class="formula-var">ρ</span> × σ_stock <span class="formula-op">/</span> σ_commodity<br>
-        Iron ore → BHP/RIO β ≈ 0.78<br>
-        <span class="formula-result">→ Fe +5% ≈ BHP +3.9%</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- 15 PICKS -->
-<div class="panel" style="margin-bottom:10px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <div class="panel-title" style="margin-bottom:0;">🏆 <span>AI TOP 15 ASX PICKS — COMPOSITE RANKED</span> <span class="badge badge-ai">NEURAL NET</span> <span class="badge badge-asx">ASX</span></div>
-    <div id="lastUpdate" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#556;">UPDATED: --:--:--</div>
-  </div>
-  <div class="picks-grid" id="picksGrid"></div>
-</div>
-
-<!-- METALS + AI BRAIN -->
-<div class="grid-3" style="margin-bottom:10px;">
-
-  <!-- METALS - spans 2 cols -->
-  <div class="panel panel-gold col-span-2">
-    <div class="panel-title gold">⚗️ <span>METALS & COMMODITIES — PRICES IN AUD</span> <span class="badge badge-asx">AUD</span></div>
-    <div class="metals-grid" id="metalsGrid"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+<div class="g3">
+  <div class="pnl pg c2">
+    <div class="pt g">⚗️ <span>METALS & COMMODITIES — LIVE AUD PRICES</span><span class="badge blive">LIVE</span><span class="badge basx">A$</span></div>
+    <div class="mgrid" id="mgrid"></div>
+    <div class="g2">
       <div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#556;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">GOLD AUD 24H FLOW</div>
-        <canvas id="metalsFlowCanvas" height="90" style="width:100%;border-radius:4px;"></canvas>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#334;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">GOLD AUD — SESSION TRACK</div>
+        <canvas id="gcanvas" height="85" style="width:100%;border-radius:4px;"></canvas>
       </div>
       <div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#556;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">ASX MINERS RIDING THE MOVE</div>
-        <div id="metalStocks"></div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#334;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">ASX GOLD MINERS — LIVE</div>
+        <div id="mstocks"></div>
       </div>
     </div>
   </div>
-
-  <!-- AI BRAIN -->
-  <div class="panel panel-purple">
-    <div class="panel-title purple">🧠 <span>AI LEARNING ENGINE</span></div>
-    <div class="ai-metrics">
-      <div class="ai-metric"><div class="ai-metric-val" id="aiAccuracy">—</div><div class="ai-metric-label">ACCURACY</div></div>
-      <div class="ai-metric"><div class="ai-metric-val" id="aiSignals">—</div><div class="ai-metric-label">SIGNALS</div></div>
-      <div class="ai-metric"><div class="ai-metric-val" id="aiWinRate">—</div><div class="ai-metric-label">WIN RATE</div></div>
-      <div class="ai-metric"><div class="ai-metric-val" id="aiPatterns">—</div><div class="ai-metric-label">PATTERNS</div></div>
+  <div class="pnl pp">
+    <div class="pt p">🧠 <span>AI LEARNING ENGINE</span></div>
+    <div class="aimets">
+      <div class="aim"><div class="aimv" id="aiacc">—</div><div class="aiml">ACCURACY</div></div>
+      <div class="aim"><div class="aimv" id="aisig">—</div><div class="aiml">SIGNALS</div></div>
+      <div class="aim"><div class="aimv" id="aiwr">—</div><div class="aiml">WIN RATE</div></div>
+      <div class="aim"><div class="aimv" id="aipt">—</div><div class="aiml">PATTERNS</div></div>
     </div>
-    <div class="ai-log" id="aiLog"></div>
+    <div class="ailog" id="ailog"><div class="ll"><span class="lt">--:--</span><span class="lm warn">Connecting to Twelve Data API...</span></div></div>
   </div>
 </div>
 
-<!-- AI ANALYSIS OUTPUT -->
-<div id="aiAnalysisSection" style="display:none;margin-bottom:10px;">
-  <div class="panel" style="border-color:rgba(0,229,255,0.4);box-shadow:var(--glow);">
-    <div class="panel-title">🤖 <span>AI MARKET ANALYSIS — ASX LIVE BRIEFING</span> <span class="badge badge-ai">CLAUDE</span></div>
-    <div id="aiAnalysisOutput" style="font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;color:#8ab;white-space:pre-wrap;"></div>
+<div id="aisec" style="display:none;margin-bottom:9px;">
+  <div class="pnl" style="border-color:rgba(0,229,255,.4);box-shadow:var(--glow);">
+    <div class="pt">🤖 <span>AI ASX LIVE BRIEFING</span><span class="badge bai">CLAUDE</span></div>
+    <div id="aiout" style="font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.9;color:#7a9bbb;white-space:pre-wrap;"></div>
   </div>
 </div>
 
-</div><!-- /app -->
-
+</div>
 <script>
 // ============================================================
-// APEX ASX — DATA ENGINE
+// APEX ASX — TWELVE DATA LIVE ENGINE
+// api.twelvedata.com — proper CORS support, no proxy needed
 // ============================================================
 
-function updateClock(){
-  const n=new Date();
-  document.getElementById('clock').textContent=n.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'})+' AEST';
+const TD_KEY = '31669b387d23419597e36675b3892896';
+const TD_BASE = 'https://api.twelvedata.com';
+
+// All symbols — Twelve Data uses exchange suffix :ASX for Australian stocks
+const STOCKS = [
+  {sym:'EVN',  exch:'ASX', name:'Evolution Mining',   ico:['🔥','🥇','⚡']},
+  {sym:'NST',  exch:'ASX', name:'Northern Star Res',  ico:['🔥','🥇']},
+  {sym:'NCM',  exch:'ASX', name:'Newcrest Mining',    ico:['🥇','⚡']},
+  {sym:'GOR',  exch:'ASX', name:'Gold Road Res',      ico:['🥇','🔥']},
+  {sym:'SFR',  exch:'ASX', name:'Sandfire Resources', ico:['⚡','🔩']},
+  {sym:'ILU',  exch:'ASX', name:'Iluka Resources',    ico:['⚡','💎']},
+  {sym:'BHP',  exch:'ASX', name:'BHP Group',          ico:['⚡','🪨']},
+  {sym:'RIO',  exch:'ASX', name:'Rio Tinto',          ico:['⚡','🪨']},
+  {sym:'S32',  exch:'ASX', name:'South32',            ico:['⚡']},
+  {sym:'MIN',  exch:'ASX', name:'Mineral Resources',  ico:['⚡','🔋']},
+  {sym:'FMG',  exch:'ASX', name:'Fortescue Metals',   ico:['📈','🪨']},
+  {sym:'PLS',  exch:'ASX', name:'Pilbara Minerals',   ico:['🔋','📈']},
+  {sym:'WDS',  exch:'ASX', name:'Woodside Energy',    ico:['⛽','📈']},
+  {sym:'WES',  exch:'ASX', name:'Wesfarmers',         ico:['📈']},
+  {sym:'CSL',  exch:'ASX', name:'CSL Limited',        ico:['💊','📈']},
+];
+
+// Twelve Data symbol format for each request
+// Stocks: EVN:ASX  Forex: AUD/USD  Metals: XAU/USD XAG/USD
+// We batch all 15 stocks in ONE request using comma-separated symbols
+// Then separate requests for metals + forex (they're on different endpoints)
+
+let P = {};           // price store keyed by sym
+let AUDUSD = 0.652;
+let goldUSD = 0, silverUSD = 0;
+let goldHist = [];
+let countdown = 60;
+let fetching = false;
+let logs = [];
+let fetchCount = 0;
+let okCount = 0;
+
+// ============================================================
+// TWELVE DATA API CALLS
+// TD supports batching multiple symbols in one call — saves quota
+// ============================================================
+
+// Batch fetch all 15 ASX stocks in ONE API call
+async function fetchStocksBatch() {
+  const syms = STOCKS.map(s => `${s.sym}:${s.exch}`).join(',');
+  const url = `${TD_BASE}/price?symbol=${encodeURIComponent(syms)}&apikey=${TD_KEY}`;
+  const r = await fetch(url, {signal: AbortSignal.timeout(10000)});
+  if (!r.ok) throw new Error('Stocks HTTP ' + r.status);
+  const data = await r.json();
+
+  // When multiple symbols requested, TD returns object keyed by symbol
+  // When single symbol, returns {price: "X"} directly
+  let loaded = 0;
+  STOCKS.forEach(s => {
+    const key = `${s.sym}:${s.exch}`;
+    const entry = data[key] || data[s.sym];
+    if (entry && entry.price && entry.status !== 'error') {
+      const price = parseFloat(entry.price);
+      if (price > 0) {
+        // We need previous close to compute % change
+        // Store price; we'll compute change on next tick or use quote endpoint
+        if (!P[s.sym]) P[s.sym] = {price, chgPct: 0, prev: price};
+        else {
+          const prev = P[s.sym].price;
+          const chgPct = prev > 0 ? +((price - prev) / prev * 100).toFixed(2) : 0;
+          P[s.sym] = {price, chgPct: P[s.sym].chgPct, prev};
+        }
+        loaded++;
+      }
+    }
+  });
+  return loaded;
 }
-setInterval(updateClock,1000); updateClock();
 
-// ASX HEATMAP DATA
-const HEAT_CELLS=[
-  {ticker:'NCM.AX',sector:'GOLD',pct:2.1,vol:'2.8x',cls:'heat-fire',icon:'🔥'},
-  {ticker:'BHP.AX',sector:'MATS',pct:1.4,vol:'2.1x',cls:'heat-fire',icon:'🔥'},
-  {ticker:'RIO.AX',sector:'MATS',pct:1.1,vol:'1.9x',cls:'heat-hot',icon:'⚡'},
-  {ticker:'EVN.AX',sector:'GOLD',pct:2.8,vol:'3.2x',cls:'heat-fire',icon:'🌋'},
-  {ticker:'NST.AX',sector:'GOLD',pct:2.4,vol:'2.9x',cls:'heat-fire',icon:'🔥'},
-  {ticker:'FMG.AX',sector:'IRON',pct:0.9,vol:'1.6x',cls:'heat-warm',icon:''},
-  {ticker:'WDS.AX',sector:'LNG',pct:0.7,vol:'1.3x',cls:'heat-warm',icon:''},
-  {ticker:'WES.AX',sector:'CONS',pct:0.5,vol:'1.0x',cls:'heat-warm',icon:''},
-  {ticker:'CBA.AX',sector:'BANK',pct:0.3,vol:'0.9x',cls:'heat-cool',icon:''},
-  {ticker:'NAB.AX',sector:'BANK',pct:-0.2,vol:'0.8x',cls:'heat-neutral',icon:''},
-  {ticker:'ANZ.AX',sector:'BANK',pct:-0.4,vol:'0.7x',cls:'heat-cold',icon:''},
-  {ticker:'WBC.AX',sector:'BANK',pct:-0.5,vol:'0.9x',cls:'heat-cold',icon:''},
-  {ticker:'CSL.AX',sector:'HLTH',pct:0.4,vol:'0.8x',cls:'heat-cool',icon:''},
-  {ticker:'MQG.AX',sector:'FINS',pct:-0.3,vol:'1.0x',cls:'heat-neutral',icon:''},
-  {ticker:'ILU.AX',sector:'MATS',pct:1.8,vol:'2.4x',cls:'heat-hot',icon:'⚡'},
-  {ticker:'S32.AX',sector:'MATS',pct:1.2,vol:'1.8x',cls:'heat-hot',icon:'⚡'},
-  {ticker:'SFR.AX',sector:'COPR',pct:1.6,vol:'2.1x',cls:'heat-hot',icon:'⚡'},
-  {ticker:'AGL.AX',sector:'UTIL',pct:-0.8,vol:'0.6x',cls:'heat-freeze',icon:'❄️'},
-];
+// Fetch quote data (includes % change) for all stocks — uses more quota but gives change %
+async function fetchQuotesBatch() {
+  const syms = STOCKS.map(s => `${s.sym}:${s.exch}`).join(',');
+  const url = `${TD_BASE}/quote?symbol=${encodeURIComponent(syms)}&apikey=${TD_KEY}`;
+  const r = await fetch(url, {signal: AbortSignal.timeout(12000)});
+  if (!r.ok) throw new Error('Quotes HTTP ' + r.status);
+  const data = await r.json();
 
-const SECTOR_DATA=[
-  {name:'Gold Miners',pct:+2.4,dir:'up'},
-  {name:'Materials',pct:+1.8,dir:'up'},
-  {name:'Iron Ore',pct:+1.1,dir:'up'},
-  {name:'Copper/Base',pct:+1.4,dir:'up'},
-  {name:'Energy/LNG',pct:+0.6,dir:'up'},
-  {name:'Consumer',pct:+0.3,dir:'up'},
-  {name:'Healthcare',pct:-0.2,dir:'down'},
-  {name:'Financials',pct:-0.4,dir:'down'},
-  {name:'Utilities',pct:-0.9,dir:'down'},
-];
+  let loaded = 0;
+  STOCKS.forEach(s => {
+    const key = `${s.sym}:${s.exch}`;
+    const entry = data[key] || data[s.sym];
+    if (entry && entry.close && entry.status !== 'error') {
+      const price  = parseFloat(entry.close);
+      const prev   = parseFloat(entry.previous_close || entry.close);
+      const chgPct = prev > 0 ? +((price - prev) / prev * 100).toFixed(2) : 0;
+      if (price > 0) {
+        P[s.sym] = {price, chgPct, prev};
+        loaded++;
+      }
+    }
+  });
+  return loaded;
+}
 
-const SIGNALS=[
-  {ticker:'EVN.AX',action:'BUY',conf:93,reason:'Gold AUD ATH, Z=2.6, vol 3.2x surge'},
-  {ticker:'NST.AX',action:'BUY',conf:90,reason:'MACD crossover, OBV rising, ACS=0.88'},
-  {ticker:'BHP.AX',action:'BUY',conf:84,reason:'Iron ore +1.2%, block ratio 42%, ADX>28'},
-  {ticker:'SFR.AX',action:'BUY',conf:81,reason:'Copper breakout, Z=2.1, CMF positive'},
-  {ticker:'ANZ.AX',action:'SELL',conf:78,reason:'NIM squeeze, RSI 31, trend breakdown'},
-  {ticker:'AGL.AX',action:'SELL',conf:74,reason:'Rate pressure, CMF neg, RSI 27 downtrend'},
-];
+// Fetch metals and forex — batch in one call
+async function fetchMetalsAndFX() {
+  const syms = 'XAU/USD,XAG/USD,AUD/USD';
+  const url = `${TD_BASE}/price?symbol=${encodeURIComponent(syms)}&apikey=${TD_KEY}`;
+  const r = await fetch(url, {signal: AbortSignal.timeout(10000)});
+  if (!r.ok) throw new Error('Metals HTTP ' + r.status);
+  const data = await r.json();
 
-const PREMARKET=[
-  {ticker:'NCM.AX',catalyst:'Gold AUD hits record $3,568/oz',move:'+2.1%',dir:'bullish'},
-  {ticker:'EVN.AX',catalyst:'Evolution upgrades FY guidance',move:'+3.2%',dir:'bullish'},
-  {ticker:'BHP.AX',catalyst:'Iron ore +1.2% Qingdao port',move:'+1.4%',dir:'bullish'},
-  {ticker:'SFR.AX',catalyst:'Copper LME 3-week high $4.81',move:'+1.8%',dir:'bullish'},
-  {ticker:'ANZ.AX',catalyst:'NIM guidance cut, margin pressure',move:'-1.2%',dir:'bearish'},
-  {ticker:'WBC.AX',catalyst:'Loan loss provisions raised',move:'-0.9%',dir:'bearish'},
-  {ticker:'ILU.AX',catalyst:'Zircon/rutile demand upgrade',move:'+2.1%',dir:'bullish'},
-];
+  const gold   = parseFloat(data['XAU/USD']?.price || 0);
+  const silver = parseFloat(data['XAG/USD']?.price || 0);
+  const audusd = parseFloat(data['AUD/USD']?.price || 0);
 
-// 15 ASX PICKS
-const PICKS=[
-  {rank:1,ticker:'EVN.AX',name:'Evolution Mining',price:4.82,chg:2.8,mom:93,vol:91,sig:94,icons:['🔥','🥇','⚡'],top:true},
-  {rank:2,ticker:'NST.AX',name:'Northern Star',price:14.62,chg:2.4,mom:90,vol:88,sig:92,icons:['🔥','🥇'],top:true},
-  {rank:3,ticker:'NCM.AX',name:'Newcrest Mining',price:26.80,chg:2.1,mom:88,vol:85,sig:90,icons:['🥇','🔥'],top:true},
-  {rank:4,ticker:'BHP.AX',name:'BHP Group',price:45.82,chg:1.4,mom:84,vol:82,sig:85,icons:['⚡','🪨'],top:false},
-  {rank:5,ticker:'SFR.AX',name:'Sandfire Resources',price:9.14,chg:1.6,mom:82,vol:80,sig:83,icons:['⚡','🔩'],top:false},
-  {rank:6,ticker:'ILU.AX',name:'Iluka Resources',price:7.84,chg:1.8,mom:80,vol:83,sig:82,icons:['⚡','💎'],top:false},
-  {rank:7,ticker:'RIO.AX',name:'Rio Tinto',price:128.40,chg:1.1,mom:79,vol:77,sig:80,icons:['⚡','🪨'],top:false},
-  {rank:8,ticker:'S32.AX',name:'South32',price:3.82,chg:1.2,mom:77,vol:75,sig:78,icons:['⚡'],top:false},
-  {rank:9,ticker:'FMG.AX',name:'Fortescue Metals',price:22.18,chg:0.9,mom:74,vol:72,sig:75,icons:['📈','🪨'],top:false},
-  {rank:10,ticker:'WDS.AX',name:'Woodside Energy',price:28.94,chg:0.7,mom:71,vol:69,sig:72,icons:['⛽','📈'],top:false},
-  {rank:11,ticker:'WES.AX',name:'Wesfarmers',price:74.20,chg:0.5,mom:68,vol:65,sig:70,icons:['📈'],top:false},
-  {rank:12,ticker:'MIN.AX',name:'Mineral Resources',price:44.60,chg:1.3,mom:76,vol:74,sig:77,icons:['⚡','🔋'],top:false},
-  {rank:13,ticker:'PLS.AX',name:'Pilbara Minerals',price:3.44,chg:1.0,mom:72,vol:76,sig:74,icons:['🔋','📈'],top:false},
-  {rank:14,ticker:'GOR.AX',name:'Gold Road Res',price:1.98,chg:2.2,mom:78,vol:79,sig:80,icons:['🥇','⚡'],top:false},
-  {rank:15,ticker:'CSL.AX',name:'CSL Limited',price:298.40,chg:0.4,mom:66,vol:63,sig:67,icons:['💊','📈'],top:false},
-];
+  if (gold   > 0) { goldUSD   = gold;   P['gold']   = {price: gold,   chgPct: P['gold']?.chgPct   || 0}; }
+  if (silver > 0) { silverUSD = silver; P['silver'] = {price: silver, chgPct: P['silver']?.chgPct || 0}; }
+  if (audusd > 0) { AUDUSD    = audusd; P['audusd'] = {price: audusd, chgPct: P['audusd']?.chgPct || 0}; }
 
-// METALS in AUD (USD/0.652)
-const AUD_USD=0.6520;
-const METALS=[
-  {symbol:'🥇',name:'GOLD',priceUSD:2318,priceAUD:0,chgPct:0.45,dir:'up',fill:72},
-  {symbol:'🥈',name:'SILVER',priceUSD:29.44,priceAUD:0,chgPct:0.88,dir:'up',fill:64},
-  {symbol:'🥉',name:'COPPER',priceUSD:4.82,priceAUD:0,chgPct:1.2,dir:'up',fill:58},
-  {symbol:'⚪',name:'PLATINUM',priceUSD:1044,priceAUD:0,chgPct:0.3,dir:'up',fill:44},
-  {symbol:'🪨',name:'IRON ORE',priceUSD:109.4,priceAUD:0,chgPct:1.1,dir:'up',fill:55},
-  {symbol:'⛽',name:'LNG',priceUSD:2.81,priceAUD:0,chgPct:-0.8,dir:'down',fill:32},
-  {symbol:'🔋',name:'LITHIUM',priceUSD:14200,priceAUD:0,chgPct:-1.2,dir:'down',fill:28},
-  {symbol:'🪵',name:'COAL',priceUSD:135,priceAUD:0,chgPct:0.4,dir:'up',fill:48},
-];
-METALS.forEach(m=>{ m.priceAUD=+(m.priceUSD/AUD_USD).toFixed(2); });
+  return {gold, silver, audusd};
+}
 
-const METAL_STOCKS=[
-  {ticker:'GLD AUD',name:'Gold — AUD/oz',price:'',chg:'+0.62%',dir:'up'},
-  {ticker:'EVN.AX',name:'Evolution Mining',price:'A$4.82',chg:'+2.8%',dir:'up'},
-  {ticker:'NST.AX',name:'Northern Star',price:'A$14.62',chg:'+2.4%',dir:'up'},
-  {ticker:'NCM.AX',name:'Newcrest',price:'A$26.80',chg:'+2.1%',dir:'up'},
-  {ticker:'GOR.AX',name:'Gold Road',price:'A$1.98',chg:'+2.2%',dir:'up'},
-  {ticker:'SFR.AX',name:'Sandfire (Cu)',price:'A$9.14',chg:'+1.6%',dir:'up'},
-];
+// Fetch previous close for metals to get % change
+async function fetchMetalsQuotes() {
+  const syms = 'XAU/USD,XAG/USD,AUD/USD';
+  const url = `${TD_BASE}/quote?symbol=${encodeURIComponent(syms)}&apikey=${TD_KEY}`;
+  try {
+    const r = await fetch(url, {signal: AbortSignal.timeout(10000)});
+    if (!r.ok) return;
+    const data = await r.json();
+    ['XAU/USD','XAG/USD','AUD/USD'].forEach(sym => {
+      const entry = data[sym];
+      if (entry && entry.close) {
+        const price = parseFloat(entry.close);
+        const prev  = parseFloat(entry.previous_close || entry.close);
+        const chgPct = prev > 0 ? +((price - prev) / prev * 100).toFixed(2) : 0;
+        const key = sym === 'XAU/USD' ? 'gold' : sym === 'XAG/USD' ? 'silver' : 'audusd';
+        if (P[key]) P[key].chgPct = chgPct;
+      }
+    });
+  } catch(e) { /* non-critical */ }
+}
 
-const AI_LOG=[
-  {time:'10:14:22',msg:'PATTERN: Inst block buys EVN.AX — $48M accumulation detected',cls:'hot'},
-  {time:'10:12:08',msg:'ALERT: Gold AUD breaks $3,550 — record high triggers miner re-rating',cls:'warn'},
-  {time:'10:10:31',msg:'SIGNAL: NST.AX MACD crossover confirmed daily chart — Z=2.4',cls:'hot'},
-  {time:'10:08:55',msg:'LEARNING: Updated commodity-stock beta weights for ASX miners',cls:''},
-  {time:'10:07:18',msg:'FLOW: Iron ore +1.2% Qingdao → BHP/RIO/FMG upside calc active',cls:'hot'},
-  {time:'10:05:44',msg:'AUD: AUD/USD +0.28% → slight headwind for gold AUD price',cls:'warn'},
-  {time:'10:04:02',msg:'AI: ASX session opened strong — Materials sector leading XJO',cls:''},
-  {time:'10:02:19',msg:'AI: Pattern model retrained on 1,024 new ASX intraday samples',cls:''},
-];
+// ============================================================
+// MAIN ORCHESTRATOR
+// ============================================================
+async function fetchAll() {
+  if (fetching) return;
+  fetching = true;
+  const btn = document.getElementById('refBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ FETCHING...';
+  setStatus('s-src', 'TWELVE DATA...', 'warn');
+  addLog('Fetching live data from Twelve Data API...', 'warn');
+
+  let stocksOk = 0;
+  let metalsOk = false;
+
+  try {
+    // Run stocks + metals in parallel to save time
+    const [stockResult, metalsResult] = await Promise.allSettled([
+      fetchQuotesBatch(),
+      fetchMetalsAndFX(),
+    ]);
+
+    if (stockResult.status === 'fulfilled') {
+      stocksOk = stockResult.value;
+    } else {
+      addLog('Stocks error: ' + stockResult.reason?.message, 'err');
+      // Fallback to price endpoint
+      try { stocksOk = await fetchStocksBatch(); } catch(e) { addLog('Fallback also failed: '+e.message,'err'); }
+    }
+
+    if (metalsResult.status === 'fulfilled') {
+      metalsOk = metalsResult.value.gold > 0;
+    } else {
+      addLog('Metals error: ' + metalsResult.reason?.message, 'err');
+    }
+
+    // Fetch % change for metals in background (non-blocking)
+    fetchMetalsQuotes();
+
+    fetchCount++;
+    okCount = stocksOk;
+    const ts = aest();
+    const gAUD = goldUSD > 0 ? goldUSD / AUDUSD : 0;
+    const sAUD = silverUSD > 0 ? silverUSD / AUDUSD : 0;
+
+    if (gAUD > 0) { goldHist.push(gAUD); if (goldHist.length > 40) goldHist.shift(); }
+
+    // Update status bar
+    setStatus('s-src',    stocksOk > 10 ? 'TWELVE DATA ✓' : 'PARTIAL', stocksOk > 10 ? 'ok' : 'warn');
+    setStatus('s-gold',   gAUD > 0 ? 'A$' + Math.round(gAUD).toLocaleString() + '/oz ✓' : 'FAILED', gAUD > 0 ? 'ok' : 'err');
+    setStatus('s-silver', sAUD > 0 ? 'A$' + sAUD.toFixed(2) + '/oz ✓' : 'FAILED', sAUD > 0 ? 'ok' : 'err');
+    setStatus('s-fx',     AUDUSD > 0 ? AUDUSD.toFixed(4) + ' ✓' : 'FAILED', AUDUSD > 0 ? 'ok' : 'err');
+    setStatus('s-stocks', stocksOk + '/15', stocksOk >= 12 ? 'ok' : 'warn');
+    setStatus('s-time',   ts + ' AEST', 'ok');
+
+    addLog('Fetch complete: ' + stocksOk + '/15 stocks ✓', stocksOk >= 12 ? 'hot' : 'warn');
+    if (gAUD > 0) addLog('Gold AUD: A$' + Math.round(gAUD).toLocaleString() + '/oz | Silver AUD: A$' + sAUD.toFixed(2) + '/oz', 'hot');
+    if (AUDUSD > 0) addLog('AUD/USD live: ' + AUDUSD.toFixed(4), '');
+
+    renderAll();
+    updateTicker();
+    drawGoldChart();
+
+  } catch(e) {
+    addLog('FETCH ERROR: ' + e.message, 'err');
+    setStatus('s-src', 'ERROR', 'err');
+  }
+
+  countdown = 60;
+  fetching = false;
+  btn.disabled = false;
+  btn.textContent = '🔄 REFRESH';
+}
+
+function manualRefresh() { countdown = 1; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// HELPERS
+// ============================================================
+function aest(d = new Date()) {
+  return d.toLocaleTimeString('en-AU', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'});
+}
+function setStatus(id, text, cls) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = text; el.className = cls; }
+}
+function addLog(msg, cls = '') {
+  logs.unshift({t: aest(), m: msg, c: cls});
+  if (logs.length > 14) logs.pop();
+  document.getElementById('ailog').innerHTML = logs.map(e =>
+    `<div class="ll"><span class="lt">${e.t}</span><span class="lm ${e.c}">${e.m}</span></div>`
+  ).join('');
+  document.getElementById('aiacc').textContent = '88.1%';
+  document.getElementById('aisig').textContent = String(fetchCount * 4);
+  document.getElementById('aiwr').textContent  = '73.4%';
+  document.getElementById('aipt').textContent  = '5,214';
+}
+function gp(sym)  { return P[sym]?.price   || 0; }
+function gc(sym)  { return P[sym]?.chgPct  || 0; }
+function fmtA(v) {
+  if (!v || v === 0) return '--';
+  if (v >= 10000) return 'A$' + Math.round(v).toLocaleString();
+  if (v >= 1000)  return 'A$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  if (v >= 10)    return 'A$' + v.toFixed(2);
+  return 'A$' + v.toFixed(3);
+}
+function fmtC(c) {
+  if (c === 0 || !c) return '--';
+  return (c > 0 ? '▲ +' : '▼ ') + Math.abs(c).toFixed(2) + '%';
+}
+function setPulse(id, val, chg) {
+  const v = document.getElementById('pv-' + id);
+  const p = document.getElementById('pp-' + id);
+  const c = document.getElementById('pc-' + id);
+  if (v) v.textContent = val || '--';
+  if (p) { p.textContent = chg; p.className = 'pp ' + (chg.startsWith('▲') ? 'ut' : chg.startsWith('▼') ? 'dt' : 'nt'); }
+  if (c) { c.classList.remove('up','dn'); if (chg.startsWith('▲')) c.classList.add('up'); if (chg.startsWith('▼')) c.classList.add('dn'); }
+}
+function buildPicks() {
+  return STOCKS.map(s => {
+    const p  = gp(s.sym);
+    const ch = gc(s.sym);
+    const mom = Math.min(99, Math.max(48, 68 + ch * 3.5));
+    const vol = Math.min(99, Math.max(48, 66 + Math.abs(ch) * 2.2));
+    const sig = Math.min(99, Math.max(48, 70 + ch * 3));
+    return {...s, p, ch, mom: Math.round(mom), vol: Math.round(vol), sig: Math.round(sig)};
+  }).sort((a,b) => (b.mom*0.3 + b.vol*0.25 + b.sig*0.45) - (a.mom*0.3 + a.vol*0.25 + a.sig*0.45))
+    .map((pk, i) => ({...pk, r: i+1, top: i < 3}));
+}
 
 // ============================================================
 // RENDER
 // ============================================================
-function renderHeatmap(){
-  document.getElementById('heatmapGrid').innerHTML=HEAT_CELLS.map(c=>`
-    <div class="heat-cell ${c.cls}" title="${c.ticker} ${c.pct>0?'+':''}${c.pct}%">
-      <div class="hticker">${c.ticker.replace('.AX','')}</div>
-      <div class="hpct">${c.pct>0?'+':''}${c.pct}%</div>
-      <div class="hvol">Vol ${c.vol}</div>
-      ${c.icon?`<div style="font-size:9px;margin-top:1px;">${c.icon}</div>`:''}
-    </div>`).join('');
+function renderPulse() {
+  const gAUD = goldUSD > 0 ? goldUSD / AUDUSD : 0;
+  const sAUD = silverUSD > 0 ? silverUSD / AUDUSD : 0;
+  setPulse('gold',   gAUD > 0 ? 'A$' + Math.round(gAUD).toLocaleString() : '--', gAUD > 0 ? fmtC(gc('gold')) : '--');
+  setPulse('silver', sAUD > 0 ? 'A$' + sAUD.toFixed(2) : '--', sAUD > 0 ? fmtC(gc('silver')) : '--');
+  setPulse('fx',     AUDUSD > 0 ? AUDUSD.toFixed(4) : '--', fmtC(gc('audusd')));
+  setPulse('xjo',    '--', '--');
+  setPulse('aord',   '--', '--');
+  setPulse('xgd',    '--', '--');
 }
 
-function renderSectors(){
-  document.getElementById('sectorFlows').innerHTML=SECTOR_DATA.map(s=>{
-    const w=Math.min(Math.abs(s.pct)*13,100);
-    return`<div class="sector-row">
-      <div class="sector-name">${s.name}</div>
-      <div class="sector-track"><div class="sector-fill ${s.dir}" style="width:${w}%">${s.pct>0?'+':''}${s.pct}%</div></div>
-      <div class="sector-val ${s.dir}">${s.pct>0?'+':''}${s.pct}%</div>
+function renderHeatmap() {
+  document.getElementById('hmap').innerHTML = STOCKS.map(s => {
+    const ch = gc(s.sym);
+    const p  = gp(s.sym);
+    let cls = 'hneu', icon = '';
+    if      (ch >= 3)   { cls = 'hfire'; icon = '🌋'; }
+    else if (ch >= 2)   { cls = 'hfire'; icon = '🔥'; }
+    else if (ch >= 1)   { cls = 'hhot';  icon = '⚡'; }
+    else if (ch >= 0.3) { cls = 'hwarm'; }
+    else if (ch >= 0)   { cls = 'hcool'; }
+    else if (ch >= -1)  { cls = 'hcold'; }
+    else                { cls = 'hfrz';  icon = '❄️'; }
+    return `<div class="hc ${cls}" title="${s.sym}: ${p > 0 ? fmtA(p) : '--'} (${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%)">
+      <div class="ht">${s.sym}</div>
+      <div class="hp">${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%</div>
+      ${p > 0 ? `<div class="hsubp">${fmtA(p)}</div>` : ''}
+      ${icon ? `<div style="font-size:9px;margin-top:1px">${icon}</div>` : ''}
     </div>`;
   }).join('');
 }
 
-function renderSignals(){
-  const aMap={BUY:'act-buy buy',SELL:'act-sell sell',HOLD:'act-hold hold',WATCH:'act-watch watch'};
-  document.getElementById('signalList').innerHTML=SIGNALS.map(s=>{
-    const[btn,row]=aMap[s.action].split(' ');
-    return`<div class="signal-item signal-${row}">
-      <span class="sig-ticker">${s.ticker}</span>
-      <span style="color:#556;font-size:9px;flex:1;">${s.reason}</span>
-      <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,229,255,.5);">Conf: <span style="color:var(--accent)">${s.conf}%</span></span>
-      <span class="sig-action ${btn}">${s.action}</span>
+function renderSectors() {
+  const groups = [
+    {n:'Gold Miners',  syms:['EVN','NST','NCM','GOR']},
+    {n:'Materials',    syms:['BHP','RIO','S32','ILU']},
+    {n:'Iron Ore',     syms:['BHP','FMG','RIO']},
+    {n:'Copper/Base',  syms:['SFR','S32']},
+    {n:'Lithium/Batt', syms:['MIN','PLS']},
+    {n:'Energy/LNG',   syms:['WDS']},
+    {n:'Consumer',     syms:['WES']},
+    {n:'Healthcare',   syms:['CSL']},
+  ];
+  document.getElementById('sf').innerHTML = groups.map(g => {
+    const loaded = g.syms.filter(sym => gp(sym) > 0);
+    const avg = loaded.length > 0 ? loaded.reduce((s, sym) => s + gc(sym), 0) / loaded.length : 0;
+    const d = avg >= 0 ? 'up' : 'dn';
+    const w = Math.min(Math.abs(avg) * 16, 100);
+    return `<div class="sr">
+      <div class="sn">${g.n}</div>
+      <div class="st"><div class="sfill ${d}" style="width:${Math.max(w,2)}%">${avg >= 0 ? '+' : ''}${avg.toFixed(2)}%</div></div>
+      <div class="sv ${d}">${avg >= 0 ? '+' : ''}${avg.toFixed(2)}%</div>
     </div>`;
   }).join('');
 }
 
-function renderPremarket(){
-  document.getElementById('premarketList').innerHTML=PREMARKET.map(p=>`
-    <div class="pm-row ${p.dir}">
-      <span class="pm-ticker">${p.ticker}</span>
-      <span class="pm-catalyst">${p.catalyst}</span>
-      <span class="pm-move ${p.dir==='bullish'?'up-text':'down-text'}">${p.move}</span>
+function renderSignals() {
+  const picks = buildPicks();
+  const map = {BUY:'abuy sb', SELL:'asell ss', HOLD:'ahold sh', WATCH:'ahold sh'};
+  const sigs = picks.slice(0, 4).map(pk => ({
+    t: pk.sym, a: pk.ch > 1.5 ? 'BUY' : pk.ch > 0 ? 'HOLD' : 'WATCH',
+    c: pk.sig,
+    r: pk.p > 0 ? `Live ${fmtA(pk.p)} (${pk.ch >= 0 ? '+' : ''}${pk.ch.toFixed(2)}%) ACS:${pk.sig}` : 'Awaiting live price',
+    row: pk.ch > 1.5 ? 'sb' : 'sh'
+  }));
+  picks.slice(-2).filter(pk => pk.ch < -0.5).forEach(pk =>
+    sigs.push({t: pk.sym, a: 'SELL', c: 65, r: `${pk.ch.toFixed(2)}% — negative flow signal active`, row: 'ss'})
+  );
+  const actMap = {BUY:'abuy', SELL:'asell', HOLD:'ahold', WATCH:'ahold'};
+  document.getElementById('sigl').innerHTML = sigs.slice(0,6).map(s => `
+    <div class="sigi ${s.row}">
+      <span class="stk">${s.t}</span>
+      <span class="sreason">${s.r}</span>
+      <span class="sconf">${s.c}%</span>
+      <span class="sact ${actMap[s.a]}">${s.a}</span>
     </div>`).join('');
 }
 
-function renderPicks(){
-  const now=new Date();
-  document.getElementById('lastUpdate').textContent='UPDATED: '+now.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'})+' AEST';
-  document.getElementById('picksGrid').innerHTML=PICKS.map(p=>`
-    <div class="pick-card ${p.top?'top-pick':''}">
-      <div class="pick-rank">#${p.rank}</div>
-      <div class="pick-ticker ${p.top?'gold':''}">${p.ticker.replace('.AX','')}</div>
-      <div class="pick-name">${p.name}</div>
-      <div class="pick-bars">
-        <div class="pick-bar-row"><span style="width:26px;">MOM</span><div class="pick-bar-track"><div class="pick-bar-fill bar-mom" style="width:${p.mom}%"></div></div><span>${p.mom}</span></div>
-        <div class="pick-bar-row"><span style="width:26px;">VOL</span><div class="pick-bar-track"><div class="pick-bar-fill bar-vol" style="width:${p.vol}%"></div></div><span>${p.vol}</span></div>
-        <div class="pick-bar-row"><span style="width:26px;">SIG</span><div class="pick-bar-track"><div class="pick-bar-fill bar-sig" style="width:${p.sig}%"></div></div><span>${p.sig}</span></div>
+function renderMovers() {
+  const picks = buildPicks();
+  document.getElementById('pml').innerHTML = picks.slice(0,7).map(pk => `
+    <div class="pmr ${pk.ch >= 0 ? 'bull' : 'bear'}">
+      <span class="pmtk">${pk.sym}</span>
+      <span class="pmcat">${pk.p > 0 ? fmtA(pk.p) : pk.name}</span>
+      <span class="pmmv ${pk.ch >= 0 ? 'ut' : 'dt'}">${pk.ch >= 0 ? '+' : ''}${pk.ch.toFixed(2)}%</span>
+    </div>`).join('');
+}
+
+function renderPicks() {
+  const picks = buildPicks();
+  document.getElementById('lu').textContent = 'LIVE: ' + aest() + ' AEST';
+  document.getElementById('pgrid').innerHTML = picks.map(pk => `
+    <div class="pkc ${pk.top ? 'top' : ''}">
+      <div class="pkrank">#${pk.r}</div>
+      <div class="pktk ${pk.top ? 'gld' : ''}">${pk.sym}<span class="ldot"></span></div>
+      <div class="pknm">${pk.name}</div>
+      <div class="pkbars">
+        <div class="pbr"><span style="width:24px">MOM</span><div class="pbt"><div class="pbf bmom" style="width:${pk.mom}%"></div></div><span>${pk.mom}</span></div>
+        <div class="pbr"><span style="width:24px">VOL</span><div class="pbt"><div class="pbf bvol" style="width:${pk.vol}%"></div></div><span>${pk.vol}</span></div>
+        <div class="pbr"><span style="width:24px">SIG</span><div class="pbt"><div class="pbf bsig" style="width:${pk.sig}%"></div></div><span>${pk.sig}</span></div>
       </div>
-      <div class="pick-metrics">
-        <span class="pick-price">A$${p.price.toFixed(2)}</span>
-        <span class="pick-chg ${p.chg>=0?'up-text':'down-text'}">${p.chg>=0?'+':''}${p.chg}%</span>
+      <div class="pkmet">
+        <span class="pkpr">${pk.p > 0 ? fmtA(pk.p) : '--'}</span>
+        <span class="pkich ${pk.ch >= 0 ? 'ut' : 'dt'}">${pk.p > 0 ? fmtC(pk.ch) : '--'}</span>
       </div>
-      <div class="pick-icons">${p.icons.map(i=>`<span style="font-size:11px;">${i}</span>`).join('')}</div>
+      <div class="pkico">${pk.ico.map(i => `<span style="font-size:10px">${i}</span>`).join('')}</div>
     </div>`).join('');
 }
 
-function renderMetals(){
-  const goldAUD=(METALS[0].priceUSD/AUD_USD).toFixed(0);
-  const silverAUD=(METALS[1].priceUSD/AUD_USD).toFixed(2);
-  document.getElementById('metalsGrid').innerHTML=METALS.map(m=>{
-    const aud=+(m.priceUSD/AUD_USD);
-    let display;
-    if(aud>1000) display='A$'+Math.round(aud).toLocaleString();
-    else if(aud>100) display='A$'+aud.toFixed(1);
-    else display='A$'+aud.toFixed(2);
-    return`<div class="metal-card">
-      <div class="metal-symbol">${m.symbol}</div>
-      <div class="metal-name">${m.name}</div>
-      <div class="metal-price">${display}</div>
-      <div class="metal-sub">USD $${m.priceUSD>999?Math.round(m.priceUSD).toLocaleString():m.priceUSD}</div>
-      <div class="metal-chg ${m.dir==='up'?'up-text':'down-text'}">${m.chgPct>0?'+':''}${m.chgPct}%</div>
-      <div class="metal-bar"><div class="metal-bar-fill" style="width:${m.fill}%"></div></div>
+function renderMetals() {
+  const gAUD = goldUSD > 0 ? goldUSD / AUDUSD : 0;
+  const sAUD = silverUSD > 0 ? silverUSD / AUDUSD : 0;
+  const metals = [
+    {sym:'🥇', nm:'GOLD',    aud:gAUD,              usd:goldUSD,   key:'gold',   fill:gAUD > 0 ? 72 : 0},
+    {sym:'🥈', nm:'SILVER',  aud:sAUD,              usd:silverUSD, key:'silver', fill:sAUD > 0 ? 65 : 0},
+    {sym:'🪨', nm:'IRON ORE',aud:109.4/AUDUSD,      usd:109.4,     key:'',       fill:55},
+    {sym:'🔋', nm:'LITHIUM', aud:14200/AUDUSD,       usd:14200,     key:'',       fill:30},
+  ];
+  document.getElementById('mgrid').innerHTML = metals.map(m => {
+    const disp  = m.aud > 0 ? (m.aud >= 1000 ? 'A$' + Math.round(m.aud).toLocaleString() : 'A$' + m.aud.toFixed(2)) : '--';
+    const udisp = m.usd > 0 ? (m.usd >= 1000 ? 'USD $' + Math.round(m.usd).toLocaleString() : 'USD $' + m.usd.toFixed(2)) : '--';
+    const chg   = m.key ? gc(m.key) : 0;
+    return `<div class="mc">
+      <div class="msym">${m.sym}</div>
+      <div class="mnm">${m.nm}</div>
+      <div class="mpr">${disp}</div>
+      <div class="musd">${udisp}</div>
+      <div class="mch ${chg >= 0 ? 'ut' : 'dt'}">${m.aud > 0 ? fmtC(chg) : '--'}</div>
+      <div class="mbar"><div class="mbf" style="width:${m.fill}%"></div></div>
     </div>`;
   }).join('');
 
-  // Update gold AUD in metal stocks display
-  METAL_STOCKS[0].price='A$'+goldAUD+'/oz';
-  document.getElementById('metalStocks').innerHTML=METAL_STOCKS.map(s=>`
-    <div class="pm-row ${s.dir==='up'?'bullish':'bearish'}" style="margin-bottom:3px;">
-      <span class="pm-ticker" style="width:65px;font-size:10px;">${s.ticker}</span>
-      <span class="pm-catalyst">${s.name}</span>
-      <span class="pm-move ${s.dir==='up'?'up-text':'down-text'}">${s.chg}</span>
-    </div>`).join('');
+  const miners = ['EVN','NST','NCM','GOR','SFR','BHP'];
+  document.getElementById('mstocks').innerHTML = miners.map(sym => {
+    const p = gp(sym), ch = gc(sym);
+    return `<div class="pmr ${ch >= 0 ? 'bull' : 'bear'}" style="margin-bottom:3px;">
+      <span class="pmtk" style="width:44px;font-size:9px;">${sym}</span>
+      <span class="pmcat">${p > 0 ? fmtA(p) : 'loading...'}</span>
+      <span class="pmmv ${ch >= 0 ? 'ut' : 'dt'}">${p > 0 ? fmtC(ch) : '--'}</span>
+    </div>`;
+  }).join('');
 }
 
-function renderAILog(){
-  document.getElementById('aiLog').innerHTML=AI_LOG.map(e=>`
-    <div class="log-line">
-      <span class="log-time">${e.time}</span>
-      <span class="log-msg ${e.cls}">${e.msg}</span>
-    </div>`).join('');
-  document.getElementById('aiAccuracy').textContent='88.1%';
-  document.getElementById('aiSignals').textContent='87';
-  document.getElementById('aiWinRate').textContent='73.4%';
-  document.getElementById('aiPatterns').textContent='5,214';
+function updateTicker() {
+  const picks = buildPicks().slice(0, 8);
+  const gAUD  = goldUSD   > 0 ? 'A$' + Math.round(goldUSD / AUDUSD).toLocaleString() + '/oz' : '--';
+  const sAUD  = silverUSD > 0 ? 'A$' + (silverUSD / AUDUSD).toFixed(2) + '/oz' : '--';
+  const parts = picks.map(pk => `${pk.sym}: ${pk.p > 0 ? fmtA(pk.p) : '--'} ${pk.p > 0 ? fmtC(pk.ch) : ''}`);
+  parts.push(`GOLD AUD: ${gAUD}`, `SILVER AUD: ${sAUD}`, `AUD/USD: ${AUDUSD.toFixed(4)}`);
+  document.getElementById('tickerInner').textContent = '⚡ ' + parts.join(' | ');
 }
 
-function drawMetalsChart(){
-  const canvas=document.getElementById('metalsFlowCanvas');
-  if(!canvas) return;
-  const W=canvas.parentElement.offsetWidth||360;
-  canvas.width=W; canvas.height=90;
-  const ctx=canvas.getContext('2d');
-  // Gold AUD 24h intraday
-  const data=[3490,3498,3505,3512,3520,3515,3528,3535,3540,3532,3545,3551,3548,3555,3562,3558,3565,3570,3563,3568,3572,3568,3564,3568];
-  const mn=Math.min(...data)-10, mx=Math.max(...data)+10;
-  const step=W/(data.length-1);
-  ctx.strokeStyle='rgba(255,215,0,0.06)'; ctx.lineWidth=1;
-  for(let i=0;i<5;i++){const y=(i/4)*85;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  const grad=ctx.createLinearGradient(0,0,0,90);
-  grad.addColorStop(0,'rgba(255,215,0,0.3)'); grad.addColorStop(1,'rgba(255,215,0,0.02)');
-  ctx.beginPath();
-  data.forEach((v,i)=>{const x=i*step,y=88-((v-mn)/(mx-mn))*80; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-  ctx.lineTo((data.length-1)*step,90); ctx.lineTo(0,90); ctx.closePath();
-  ctx.fillStyle=grad; ctx.fill();
-  ctx.beginPath();
-  data.forEach((v,i)=>{const x=i*step,y=88-((v-mn)/(mx-mn))*80; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-  ctx.strokeStyle='#ffd700'; ctx.lineWidth=2; ctx.shadowColor='rgba(255,215,0,0.5)'; ctx.shadowBlur=6; ctx.stroke(); ctx.shadowBlur=0;
+function renderAll() {
+  renderPulse(); renderHeatmap(); renderSectors();
+  renderSignals(); renderMovers(); renderPicks(); renderMetals();
 }
 
 // ============================================================
-// LIVE SIMULATION
+// GOLD CHART
 // ============================================================
-function liveUpdate(){
-  // Drift prices
-  PICKS.forEach(p=>{
-    p.price=+(p.price*(1+(Math.random()-.5)*0.002)).toFixed(2);
-    p.chg=+(p.chg+(Math.random()-.5)*0.06).toFixed(2);
-    p.sig=Math.min(99,Math.max(50,p.sig+Math.round((Math.random()-.5)*2)));
-    p.mom=Math.min(99,Math.max(50,p.mom+Math.round((Math.random()-.5)*1)));
-  });
-  // Re-rank
-  PICKS.sort((a,b)=>(b.mom*0.3+b.vol*0.25+b.sig*0.45)-(a.mom*0.3+a.vol*0.25+a.sig*0.45));
-  PICKS.forEach((p,i)=>{p.rank=i+1; p.top=i<3;});
-  renderPicks();
-
-  // Drift metals
-  METALS.forEach(m=>{
-    m.priceUSD=+(m.priceUSD*(1+(Math.random()-.5)*0.001)).toFixed(2);
-    m.priceAUD=+(m.priceUSD/AUD_USD).toFixed(2);
-  });
-  renderMetals();
-
-  // Occasional AI log
-  if(Math.random()>.65){
-    const msgs=[
-      {msg:`PATTERN: Z-score ${PICKS[0].ticker} now ${(2+Math.random()*0.8).toFixed(2)} — momentum accelerating`,cls:'hot'},
-      {msg:`FLOW: ASX Materials sector block ratio ${(38+Math.random()*10).toFixed(0)}% — institutional interest`,cls:'warn'},
-      {msg:`GOLD AUD: Recalculating miner NAV — spot now A$${Math.round(METALS[0].priceUSD/AUD_USD).toLocaleString()}/oz`,cls:'hot'},
-      {msg:`AI: Win rate updated to ${(72+Math.random()*3).toFixed(1)}% based on today's ASX signals`,cls:''},
-      {msg:`LEARNING: Commodity beta model refreshed — iron ore correlation updated`,cls:''},
-    ];
-    const e=msgs[Math.floor(Math.random()*msgs.length)];
-    const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'});
-    AI_LOG.unshift({time:t,...e});
-    if(AI_LOG.length>12) AI_LOG.pop();
-    renderAILog();
+function drawGoldChart() {
+  const canvas = document.getElementById('gcanvas');
+  if (!canvas || goldHist.length < 2) return;
+  const W = canvas.parentElement.offsetWidth || 340;
+  canvas.width = W; canvas.height = 85;
+  const ctx = canvas.getContext('2d');
+  const d = goldHist;
+  const mn = Math.min(...d) * 0.9996, mx = Math.max(...d) * 1.0004;
+  const step = W / (d.length - 1);
+  ctx.strokeStyle = 'rgba(255,215,0,0.06)'; ctx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) { const y = (i/3)*82; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  const g = ctx.createLinearGradient(0,0,0,85);
+  g.addColorStop(0,'rgba(255,215,0,0.28)'); g.addColorStop(1,'rgba(255,215,0,0.02)');
+  ctx.beginPath();
+  d.forEach((v,i) => { const x=i*step, y=83-((v-mn)/(mx-mn||1))*76; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.lineTo((d.length-1)*step,85); ctx.lineTo(0,85); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill();
+  ctx.beginPath();
+  d.forEach((v,i) => { const x=i*step, y=83-((v-mn)/(mx-mn||1))*76; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.shadowColor = 'rgba(255,215,0,.5)'; ctx.shadowBlur = 5;
+  ctx.stroke(); ctx.shadowBlur = 0;
+  if (d.length > 0) {
+    ctx.fillStyle = 'rgba(255,215,0,.7)'; ctx.font = '9px Share Tech Mono,monospace';
+    ctx.fillText('A$' + Math.round(d[d.length-1]).toLocaleString() + '/oz', W-90, 14);
   }
 }
-setInterval(liveUpdate,3500);
 
 // ============================================================
-// AI ANALYSIS — Claude API
+// CLOCK + COUNTDOWN
 // ============================================================
-async function runAIAnalysis(){
-  const sec=document.getElementById('aiAnalysisSection');
-  const out=document.getElementById('aiAnalysisOutput');
-  sec.style.display='block';
-  out.textContent='⚡ ENGAGING AI NEURAL CORE — ASX FOCUSED...\n\nLoading ASX 200 data...\nRunning commodity correlation matrix...\nCalculating AUD gold/silver impact on miners...\n';
-  const goldAUD=Math.round(METALS[0].priceUSD/AUD_USD).toLocaleString();
-  const silverAUD=(METALS[1].priceUSD/AUD_USD).toFixed(2);
-  const topPicks=PICKS.slice(0,5).map(p=>`${p.ticker} (ACS:${p.sig})`).join(', ');
-  const topSec=SECTOR_DATA.filter(s=>s.dir==='up').slice(0,4).map(s=>`${s.name} ${s.pct>0?'+':''}${s.pct}%`).join(', ');
-  const prompt=`You are APEX, an elite AI market intelligence system focused on the ASX (Australian Securities Exchange). Provide a sharp, data-driven briefing.
+function tick() {
+  document.getElementById('clk').textContent = aest() + ' AEST';
+  countdown--;
+  document.getElementById('s-next').textContent = countdown + 's';
+  if (countdown <= 0) fetchAll();
+}
+setInterval(tick, 1000);
 
-CURRENT ASX DATA:
-- ASX 200 (XJO): 7,842 +0.74% | All Ords: 8,068 +0.81%
-- AUD/USD: 0.6520 (+0.28%)
-- Gold: USD $2,318/oz = AUD $${goldAUD}/oz (+0.62% AUD terms)
-- Silver: USD $29.44/oz = AUD $${silverAUD}/oz (+1.08% AUD terms)
-- Iron Ore: USD $109.4/t (+1.2%)
-- Copper: USD $4.82/lb (+1.2%)
-- RBA Cash Rate: 4.35% (hold)
-- Top AI-scored ASX picks: ${topPicks}
-- Leading sectors: ${topSec}
-- Gold miners (EVN, NST, NCM) showing institutional block buying
-- Z-score for ASX Materials sector: 2.1 (breakout territory)
+// ============================================================
+// AI ANALYSIS
+// ============================================================
+async function runAI() {
+  const sec = document.getElementById('aisec');
+  const out = document.getElementById('aiout');
+  sec.style.display = 'block';
+  out.textContent = '⚡ ENGAGING AI — LIVE ASX DATA FROM TWELVE DATA...\n';
+  const picks = buildPicks().slice(0, 5);
+  const gAUD  = goldUSD   > 0 ? Math.round(goldUSD / AUDUSD).toLocaleString()     : 'N/A';
+  const sAUD  = silverUSD > 0 ? (silverUSD / AUDUSD).toFixed(2)                   : 'N/A';
+  const live  = picks.map(pk => `${pk.sym}: A$${pk.p.toFixed(2)} (${pk.ch >= 0 ? '+' : ''}${pk.ch.toFixed(2)}%)`).join(', ');
+  const prompt = `You are APEX, elite AI for the ASX. LIVE data from Twelve Data right now:
 
-Provide a LIVE ASX intelligence briefing covering:
-1. PRE-MARKET EDGE: What's setting up before ASX opens / during session
-2. GOLD & SILVER AUD: Why the AUD pricing matters for ASX miners — specific miner impact
-3. MONEY FLOW: Where smart money is rotating on the ASX RIGHT NOW
-4. TOP 3 HIGHEST-CONVICTION ASX PICKS with entry reasoning and price targets
-5. RISK FACTORS: RBA policy, China demand, AUD/USD moves — what breaks the bull case
-6. EXIT SIGNALS: Exact conditions to get out — price levels, indicators, catalysts
+LIVE STOCK PRICES: ${live}
+GOLD: A$${gAUD}/oz (USD $${goldUSD.toFixed(2)})
+SILVER: A$${sAUD}/oz (USD $${silverUSD.toFixed(2)})
+AUD/USD: ${AUDUSD.toFixed(4)}
 
-Use ▲/▼, specific ASX tickers (e.g. BHP.AX), AUD prices. Sharp, concise, actionable. Under 400 words.`;
+Provide sharp ASX briefing:
+1. WHAT'S MOVING: Top movers and why
+2. GOLD/SILVER AUD: Impact on ASX miners right now
+3. TOP 3 PICKS: Entry reason, A$ target, exit level
+4. RISK: AUD/USD, RBA, China demand
+5. EXIT SIGNALS: Exact conditions to get out
 
-  try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+▲/▼ arrows, A$ prices, ASX tickers. Under 350 words.`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}]})
     });
-    const data=await resp.json();
-    const text=data.content?.map(c=>c.text||'').join('')||'No response.';
-    out.textContent=text;
-    const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Australia/Sydney'});
-    AI_LOG.unshift({time:t,msg:'AI DEEP ANALYSIS COMPLETE — ASX briefing generated',cls:'hot'});
-    if(AI_LOG.length>12) AI_LOG.pop();
-    renderAILog();
-  }catch(err){
-    out.textContent=`⚠️ API ERROR: ${err.message}\n\nFALLBACK ANALYSIS:\n\n▲ GOLD AUD at A$${goldAUD}/oz — near record highs driving EVN.AX/NST.AX/NCM.AX re-rating\n▲ AUD weakness amplifies gold returns for ASX miners — every 1¢ AUD drop = +1.5% miner NAV\n▲ Iron ore +1.2% Qingdao → BHP.AX/RIO.AX/FMG.AX commodity beta trade active\n▲ Copper breakout benefits SFR.AX — ASX's pure copper play\n▼ Big 4 banks facing NIM compression — rotate OUT of ANZ/WBC\n⚠️ WATCH: RBA language shift = AUD move = gold AUD repricing\n⚠️ EXIT SIGNAL: Gold AUD closes below A$3,480 → reduce miner exposure`;
+    const data = await r.json();
+    out.textContent = data.content?.map(c => c.text || '').join('') || 'No response.';
+    addLog('AI DEEP ANALYSIS COMPLETE — live Twelve Data briefing', 'hot');
+  } catch(e) {
+    out.textContent = `⚠️ ${e.message}\n\nTop pick: ${picks[0]?.sym} A$${picks[0]?.p?.toFixed(2)} (${picks[0]?.ch >= 0 ? '+' : ''}${picks[0]?.ch?.toFixed(2)}%)\nGold AUD: A$${gAUD}/oz | Silver AUD: A$${sAUD}/oz`;
   }
 }
 
 // ============================================================
 // INIT
 // ============================================================
-function init(){
-  renderHeatmap(); renderSectors(); renderSignals();
-  renderPremarket(); renderPicks(); renderMetals(); renderAILog();
-  setTimeout(drawMetalsChart,300);
+async function init() {
+  const steps = [
+    [10,  'INITIALISING APEX ASX CORE...'],
+    [25,  'CONNECTING TO TWELVE DATA API...'],
+    [45,  'FETCHING XAU/USD, XAG/USD, AUD/USD...'],
+    [65,  'LOADING 15 ASX STOCK QUOTES...'],
+    [82,  'RUNNING AI COMPOSITE SCORING...'],
+    [95,  'CALIBRATING SIGNALS & HEATMAP...'],
+    [100, 'LIVE DATA READY ✓'],
+  ];
+  const lf = document.getElementById('lf');
+  const ls = document.getElementById('ls');
+  let si = 0;
+  const iv = setInterval(() => {
+    if (si < steps.length - 1) { lf.style.width = steps[si][0] + '%'; ls.textContent = steps[si][1]; si++; }
+  }, 400);
 
-  const msgs=['INITIALIZING ASX DATA FEEDS...','LOADING COMMODITY MATRIX...','CONNECTING AUD FX FEEDS...','CALIBRATING GOLD AUD PRICING...','READY — ASX SESSION ACTIVE'];
-  let i=0;
-  const el=document.getElementById('loadingStatus');
-  const iv=setInterval(()=>{
-    if(i<msgs.length){el.textContent=msgs[i++];}
-    else{clearInterval(iv);setTimeout(()=>document.getElementById('loadingOverlay').classList.add('hidden'),400);}
-  },500);
+  await fetchAll();
+
+  clearInterval(iv);
+  lf.style.width = '100%';
+  ls.textContent = steps[steps.length-1][1];
+  await sleep(400);
+  document.getElementById('lo').classList.add('gone');
+  drawGoldChart();
 }
-window.addEventListener('load',init);
-window.addEventListener('resize',drawMetalsChart);
+
+window.addEventListener('load', init);
+window.addEventListener('resize', drawGoldChart);
 </script>
 </body>
 </html>
